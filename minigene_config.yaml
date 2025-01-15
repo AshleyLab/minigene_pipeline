@@ -1,0 +1,106 @@
+# Number of CPU cores available; adjust according to system's capabilities#
+max_workers: 32
+
+# VARIABLES FOR SETUP.PY (SCRIPT 1) #
+# path to fastq file to be analysed for variant-barcode relationship #
+fastq_path: "/oak/stanford/groups/euan/projects/kaiser/MYBPC3/data/splicelib_5k.fastq"
+
+# minimum Phred average quality score to filter DNA fastq file #
+DNA_baseq_threshold: 10
+
+# path to reference fasta #
+reference_fasta: "/oak/stanford/groups/euan/projects/kaiser/MYBPC3/data/MYBPC3_amp.fa"
+
+# path to the directory for all output files #
+root_output_dir: "/oak/stanford/groups/euan/projects/kaiser/MYBPC3/MYBPC3_analysis"
+
+# forward sequences of barcode prefix and suffix #
+fw_barcode_prefix: "CCACCCAG"
+fw_barcode_suffix: "CAATTGGC"
+
+# reverse sequences of barcode prefix and suffix #
+rev_barcode_prefix: "GCCAATTG"
+rev_barcode_suffix: "CTGGGTGG"
+
+# length of barcode #
+barcode_length: 12
+
+# depending on how many barcodes you expect to have e.g. 20 for 5000 barcodes is optimal # 
+arr_number: 20
+
+# VARIABLES FOR DEEPVARIANT #
+
+# adjust according to your sequencing data type (WGS,WES,PACBIO,ONT_R104 or HYBRID_PACBIO_ILLUMINA) #
+model_type: "ONT_R104"
+
+
+# VARIABLES FOR PROCESS_VARIANTS.PY (SCRIPT 2) #
+# start and ends of mutagenisis position with respect to reference sequence #
+mut_region_start: 456
+mut_region_end: 599
+
+# variants that failed qc in the format of ["var1", "var2", "var3", "var4", ...]. if none, replace with empty list [] - failed_variants: [] #
+failed_variants: ["464T>A", "464T>G"]
+
+
+# VARIABLES FOR SPLICE_ANALYSIS.PY (SCRIPT 3) #
+# path of fastq file for splicing analysis # 
+cDNA_fastq_file: "/oak/stanford/groups/euan/projects/kaiser/MYBPC3/data/spmix_cDNA.fastq"
+
+# minimum Phred average quality score to filter cDNA fastq file #
+cDNA_baseq_threshold: 10
+
+# name of your gene to be analysed #
+database_name: "MYBPC3"
+
+# start and end positions of your reference sequence to build filter_sites_file; only change ref_end_pos #
+ref_start_pos: 1
+ref_end_pos: 1238
+
+# variables for isoform analysis #
+breakpoint_freq_threshold: 3
+very_close_bp: 3
+breakpoint_padding: 10
+
+# forward front and end + reversed front and end index sequence patterns for each of your samples
+index_sequence_patterns:
+  iPSC1:
+    fwd_front: "CGTCTAAT"
+    fwd_end: "AGGCAGAA"
+    rev_front: "TTCTGCCT"
+    rev_end: "ATTAGACG"
+  iPSC2:
+    fwd_front: "TCGACTAG"
+    fwd_end: "TAAGGCGA"
+    rev_front: "TCGCCTTA"
+    rev_end: "CTAGTCGA"
+  iPSC3:
+    fwd_front: "TTATGCGA"
+    fwd_end: "CGTACTAG"
+    rev_front: "CTAGTACG"
+    rev_end: "TCGCATAA"
+  iPSC4:
+    fwd_front: "CGTCTAAT"
+    fwd_end: "TAGCGCTC"
+    rev_front: "GAGCGCTA"
+    rev_end: "ATTAGACG"
+  HEK1:
+    fwd_front: "TCGACTAG"
+    fwd_end: "GGACTCCT"
+    rev_front: "AGGAGTCC"
+    rev_end: "CTAGTCGA"
+  HEK2:
+    fwd_front: "TTATGCGA"
+    fwd_end: "CTCTCTAC"
+    rev_front: "GTAGAGAG"
+    rev_end: "TCGCATAA"
+  HEK3:
+    fwd_front: "CGTCTAAT"
+    fwd_end: "CGGAGCCT"
+    rev_front: "AGGCTCCG"
+    rev_end: "ATTAGACG"
+
+# VARIABLES FOR BARCODE_CODON_RS.PY (REPLACE WITH " " IF YOUR ANALYSIS DOES NOT REQUIRE AMINO ACID DETERMINATION) #
+
+# file path of qc report for variant library #
+qc_report: "/oak/stanford/groups/euan/projects/kaiser/MYBPC3/MYBPC3_QC.xlsx"
