@@ -7,8 +7,7 @@ Single nucleotide variants (SNVs) were introduced into the mutagenesis region, s
 1. Log in to Sherlock and navigate to directory where results are to be stored i.e. target_dir
 2. Copy minigene_pipeline directory into your target directory using the below command  
    ```  
-   cp -r /oak/stanford/groups/euan/projects/variant_effect_mapping/minigene_splicing_assay /path/to/target_dir 
-
+   cp -r /oak/stanford/groups/euan/projects/variant_effect_mapping/minigene_splicing_assay /path/to/target_dir
 #### Setting Up Minigene Pipeline's Environment
 3. Navigate into copied minigene_splicing_assay directory
    ```
@@ -21,17 +20,7 @@ Single nucleotide variants (SNVs) were introduced into the mutagenesis region, s
 6. Install packages
    ```
    pip install --upgrade pip
-   pip install -r requirements.txt
-
-   # Install Samtools (v1.16.1)
-   wget https://github.com/samtools/samtools/releases/download/1.16.1/samtools-1.16.1.tar.bz2
-   tar -xvjf samtools-1.16.1.tar.bz2 
-   cd samtools-1.16.1/
-   ./configure --prefix=/path/to/target_dir/minigene_splicing_assay/minigene_splicing_assay/minigene_env --disable-lzma
-   make
-   make install
-   cd ..                                                                  
-   samtools --version                    # affirm that samtools was installed properly      
+   pip install -r requirements.txt    
 
    # Install Chopper (v0.7.0)
    wget https://github.com/wdecoster/chopper/releases/download/v0.7.0/chopper-musl.zip
@@ -46,10 +35,19 @@ Single nucleotide variants (SNVs) were introduced into the mutagenesis region, s
    mv minimap2-2.28_x64-linux/minimap2 minigene_env/bin
    minimap2 --version                    # affirm that minimap2 was installed properly
 
+   # Install Samtools (v1.16.1)
+   wget https://github.com/samtools/samtools/releases/download/1.16.1/samtools-1.16.1.tar.bz2
+   tar -xvjf samtools-1.16.1.tar.bz2 
+   cd samtools-1.16.1/
+   ./configure --prefix=/oak/stanford/groups/euan/projects/kaiser/MYBPC3/minigene_splicing_assay/minigene_env --disable-lzma --without-curses
+   make
+   make install
+   cd ..                                                                  
+   samtools --version                    # affirm that samtools was installed properly  
+
    # Clean up
    rm samtools-1.16.1.tar.bz2 chopper-musl.zip minimap2-2.28_x64-linux.tar.bz2
    rm -r samtools-1.16.1 chopper_bin minimap2-2.28_x64-linux
-
 #### Execution
 7. Edit minigene_config.yaml file to suit your data
    ```
@@ -71,9 +69,8 @@ Single nucleotide variants (SNVs) were introduced into the mutagenesis region, s
 
    # For full analysis including isoform processing, do:
    sbatch /path/to/target_dir/minigene_splicing_assay/minigene_pipeline.sbatch /path/to/target_dir/minigene_splicing_assay
-   
 #### Tools:
 samtools: [samtools](https://github.com/samtools/samtools)  
-chopper: [chopper](https://github.com/wdecoster/chopper)
+chopper: [chopper](https://github.com/wdecoster/chopper)  
 minimap2: [minimap2](https://github.com/lh3/minimap)  
 deepvariant: [deepvariant](https://github.com/google/deepvariant)
