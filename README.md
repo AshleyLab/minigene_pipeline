@@ -23,45 +23,7 @@ Single nucleotide variants (SNVs) were introduced into the mutagenesis region, s
    source minigene_env/bin/activate     # activate minigene_env
 7. Install packages
    ```
-   pip install --upgrade pip
-   pip install -r requirements.txt    
-
-   # Install Chopper (v0.7.0)
-   wget https://github.com/wdecoster/chopper/releases/download/v0.7.0/chopper-musl.zip
-   unzip chopper-musl.zip -d chopper_bin
-   mv chopper_bin/chopper minigene_env/bin
-   chmod +x minigene_env/bin/chopper
-   chopper --version                    # affirm that chopper was installed properly
-
-   # Install minimap2 (2.28 (r1209))
-   wget https://github.com/lh3/minimap2/releases/download/v2.28/minimap2-2.28_x64-linux.tar.bz2
-   tar -xvf minimap2-2.28_x64-linux.tar.bz2
-   mv minimap2-2.28_x64-linux/minimap2 minigene_env/bin
-   minimap2 --version                   # affirm that minimap2 was installed properly
-
-   # Install GMAP (Version 2024-11-20)
-   wget http://research-pub.gene.com/gmap/src/gmap-gsnap-2024-11-20.tar.gz
-   tar -xvzf gmap-gsnap-2024-11-20.tar.gz
-   cd gmap-2024-11-20
-   ./configure --prefix=/path/to/target_dir/minigene_pipeline/minigene_env
-   make
-   make install
-   cd ..
-   gmap --version                       # affirm that gmap was installed properly  
-
-   # Install Samtools (v1.16.1)
-   wget https://github.com/samtools/samtools/releases/download/1.16.1/samtools-1.16.1.tar.bz2
-   tar -xvjf samtools-1.16.1.tar.bz2 
-   cd samtools-1.16.1/
-   ./configure --prefix=/path/to/target_dir/minigene_pipeline/minigene_env --disable-lzma --without-curses
-   make
-   make install
-   cd ..                                                                  
-   samtools --version                   # affirm that samtools was installed properly  
-
-   # Clean up
-   rm gmap-gsnap-2024-11-20.tar.gz samtools-1.16.1.tar.bz2 chopper-musl.zip minimap2-2.28_x64-linux.tar.bz2
-   rm -r gmap-2024-11-20 samtools-1.16.1 chopper_bin minimap2-2.28_x64-linux
+   python3 install_minigene_tools.py
 #### Execution
 8. Edit minigene_config.yaml file to suit your data
    ```
