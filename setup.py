@@ -3,6 +3,7 @@
 import os
 import yaml
 import re
+import gzip
 import concurrent.futures
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, wait, as_completed
 import pandas as pd
@@ -16,7 +17,7 @@ import subprocess
 from itertools import cycle
 import shlex
 
-### Determine the full path of which minigene_splicing_assay dir was copied to ###
+### Determine the full path of which minigene_pipeline dir was copied to ###
 minigene_dir = os.path.dirname(os.path.realpath(__file__))
 
 ### Load config.yaml ###
@@ -28,17 +29,18 @@ with open(config_file, 'r') as f:
 fastq_path = config["fastq_path"]
 DNA_baseq_threshold = config["DNA_baseq_threshold"]
 reference_fasta = config["reference_fasta"]
+gene = config["gene"]
 root_output_dir = config["root_output_dir"]
 fw_barcode_prefix = config['fw_barcode_prefix']
 fw_barcode_suffix = config['fw_barcode_suffix']
 rev_barcode_prefix = config['rev_barcode_prefix']
 rev_barcode_suffix = config['rev_barcode_suffix']
 barcode_length = config['barcode_length']
+k = config['k']
 arr_number = config["arr_number"]
 max_workers = config["max_workers"]
 
 mm2_max_workers = max_workers // 4
-k = 0.5
 
 ### Compile regex for finding 3' barcodes in both forward and reverse reads ###
 fwd_bc_regex = re.compile(f"{fw_barcode_prefix}([ATCG]{{{barcode_length}}}){fw_barcode_suffix}")
@@ -66,7 +68,6 @@ def create_directories():
         if not os.path.exists(dir_path):
             os.makedirs(dir_path, exist_ok=True)
 
-
 ################################
 ### GENERATE REFERENCE INDEX ###
 ################################
@@ -84,10 +85,9 @@ def index_reference(reference_fasta):
     else:
         print(f"Index file {fai_file} already exists.")
 
-
-##################################
-### PREPROCESSING WITH CHOPPER ###
-##################################
+####################################
+### QUALITY CONTROL WITH CHOPPER ###
+####################################
 
 def run_chopper(fastq_path, chopper_minigenes_dir):
     """Run Chopper on the input cDNA FASTQ file for quality control"""
@@ -102,7 +102,7 @@ def run_chopper(fastq_path, chopper_minigenes_dir):
     print(f"Running Chopper: {chopper_cmd}")
     subprocess.run(chopper_cmd, shell=True, check=True)
 
-    return choppered_fastq_path 
+    return choppered_fastq_path
 
 
 #########################################################################################                                                                  
@@ -173,7 +173,8 @@ def create_barcode_df(read_storage):
 
 def process_barcode_counts(df_barcode_counts):
     """
-    Processes barcode counts to rank barcodes and plot a barcode rank plot, identify the kneepoint of plot with kneebow to determine threshold for high-fidelity barcodes
+    Processes barcode counts to rank barcodes and plot a barcode rank plot, 
+    using kneebow to identify the kneepoint of plot i.e. threshold that separates high from low-quality barcodes
 
     Parameters:
     * df_barcode_counts (df): df containing barcode counts with 'Barcode' and 'Count' colums
@@ -182,46 +183,94 @@ def process_barcode_counts(df_barcode_counts):
     * Rank barcodes based on their frequencies, with rank 1 given to barcode with highest count
     * Sort df by barcode rank in descending order
     * Plot Barcode Rank Plot of log(count of barcodes) vs barcode rank using Plotly
-    * Use kneebow to automatically identify barcode knee point i.e threshold that separates high from low-quality barcodes
-    * Set global variables for barcode threshold, valid barcodes, and the number of barcodes below the threshold for use later on
+    * Use kneebow to automatically identify barcode knee point 
+    * Barcode thresholds, valid barcodes, and the number of barcodes below the threshold stored as global variables for downstream processing
     """
-    df_barcode_counts['Barcode_Rank'] = df_barcode_counts['Count'].rank(method='min', ascending=False)                                                 
+    global barcode_rank_threshold
+    global barcode_freq_threshold
+    global valid_barcodes
+    global num_barcodes_not_written
+
+    df_barcode_counts['Barcode_Rank'] = df_barcode_counts['Count'].rank(method='dense', ascending=False).astype(int)
     df_barcode_counts.sort_values('Barcode_Rank', inplace=True)
-    df_barcode = df_barcode_counts.reset_index(drop=True)          
+    df_barcode = df_barcode_counts.reset_index(drop=True)
+
+    ### Extract x and y values for the curve (log-transformed for better knee detection) ###
+    x = np.log10(df_barcode_counts["Barcode_Rank"].values)
+    y = np.log10(df_barcode_counts["Count"].values)
+
+    ### Start and end points of the line ###
+    x_start, y_start = x[0], y[0]
+    x_end, y_end = x[-1], y[-1]
+
+    ### Calculate the line equation coefficients (a, b, -c) for ax + by + c = 0 ###
+    a = y_end - y_start
+    b = -(x_end - x_start)
+    c = (y_start * (x_end - x_start)) - (x_start * (y_end - y_start))
+
+    ### Calculate the perpendicular distance from each point to the line ###
+    distances = np.abs(a * x + b * y + c) / np.sqrt(a**2 + b**2)
+
+    ### Find the index of the maximum distance ###
+    knee_idx = np.argmax(distances)
+    knee_x = 10 ** x[knee_idx]  # Convert from log scale to original scale
+    knee_y = 10 ** y[knee_idx]  # Convert from log scale to original scale
+
+    ### Get barcode rank and count threshold ###
+    barcode_rank_threshold = int(round(k * knee_x))
+    barcode_freq_threshold = df_barcode_counts.loc[df_barcode_counts["Barcode_Rank"] == barcode_rank_threshold, "Count"].values[0]
 
     ### Plot barcode rank plot with Plotly ###
-    trace = go.Scatter(x=df_barcode['Barcode_Rank'], y=df_barcode['Count'], mode='markers', marker=dict(size=2, color='blue'))
-    layout = go.Layout(title='Barcode Rank vs. Number of Reads per Barcode (Log Scale)', xaxis=dict(title='Barcode Rank', type='log'),          
-                    yaxis=dict(title='Number of Reads per Barcode', type='log'), hovermode='closest', showlegend=False)
-    fig = go.Figure(data=[trace], layout=layout)
+    fig = go.Figure()
 
-    ### Obtain knee point (i.e. barcodes sequenced with low fidelity) of barcode rank plot with kneebow ###
-    kneedata = df_barcode[['Barcode_Rank', 'Count']].values
-    rotor = Rotor()
-    rotor.fit_rotate(kneedata)
-    elbow_idx = rotor.get_elbow_index()
-    elbow_point = kneedata[elbow_idx]
-    knee_y = round((elbow_point[1])*k)                                                                                                       
-    knee_x = df_barcode[df_barcode['Count'] == knee_y]['Barcode_Rank'].iloc[0]                                                                
-                                                                                
-    fig.add_vline(x=knee_x, line_width=1, line_dash="dash", line_color="mediumvioletred")
-    fig.update_layout(plot_bgcolor='ghostwhite')
+    ### Add main barcode rank plot as a scatter plot ###
+    fig.add_trace(go.Scatter(x=df_barcode_counts["Barcode_Rank"] ,y=df_barcode_counts["Count"],
+                             mode='markers', name="Barcode Rank Plot", marker=dict(color='darkblue', size=2)))
+
+    ### Add barcode rank and count threshold as vertical line ###
+    fig.add_trace(go.Scatter(x=[knee_x, knee_x], y=[df_barcode_counts["Count"].min()-10, df_barcode_counts["Count"].max()], 
+                             mode='lines', name=f"Knee Point at Rank: {int(knee_x)}", line=dict(color='#800020', dash='dash')))
+
+    ### Add knee point as marker dot ###
+    fig.add_trace(go.Scatter(x=[knee_x], y=[knee_y], 
+                             mode='markers', marker=dict(color='#800020', size=10), name="knee point"))
+
+    ### Update plot layout ###
+    fig.update_layout(
+        title=f"Barcode Rank Plot of {gene} Minigene Plasmid Library",
+        title_font=dict(size=30), 
+        xaxis=dict(
+            type="log",
+            title="Barcode Rank (log)",
+            title_font=dict(size=25),  
+            tickfont=dict(size=20) 
+        ),
+        yaxis=dict(
+            title="Barcode Frequency (log)",
+            type="log",
+            title_font=dict(size=25), 
+            tickfont=dict(size=20)  
+        ),
+        plot_bgcolor='#fcf9ff',
+        showlegend=False, 
+        hoverlabel=dict(
+            font_size=19 
+        )
+    )
+
+    ### Add grid lines ###
     fig.update_xaxes(showline=True, linewidth=1, linecolor='black', gridcolor='lightgrey')
     fig.update_yaxes(showline=True, linewidth=1, linecolor='black', gridcolor='lightgrey')
+
     ### Create path to save barcode_rank_plot.html ###
     html_file_path = os.path.join(barcode_rank_dir, "barcode_rank_plot.html")
     pio.write_html(fig, html_file_path)
     csv_file_path = os.path.join(barcode_rank_dir, "barcode_rank.csv")
     df_barcode.to_csv(csv_file_path, index=False)
 
-    global barcode_threshold
-    barcode_threshold = knee_y
+    valid_barcodes = df_barcode_counts[df_barcode_counts['Barcode_Rank'] <= barcode_rank_threshold]['Barcode'].tolist()
 
-    global valid_barcodes
-    valid_barcodes = df_barcode_counts[df_barcode_counts['Count'] >= barcode_threshold]['Barcode'].tolist()
-
-    global num_barcodes_not_written  
-    below_threshold_barcodes = df_barcode_counts[df_barcode_counts['Count'] < barcode_threshold]
+    below_threshold_barcodes = df_barcode_counts[df_barcode_counts['Barcode_Rank'] > barcode_rank_threshold]
     num_barcodes_not_written = below_threshold_barcodes.shape[0]
 
 def write_reads_to_file(reads, file_path):
@@ -235,18 +284,18 @@ def write_reads_to_file_parallel(read_storage, valid_barcodes, output_dir):
     def task(writer_function, reads, file_path):
         writer_function(reads, file_path)
 
-    with ThreadPoolExecutor(max_workers=max_workers) as executor:  
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
         ### Write high-quality barcode reads as determined by knee plot ###
         for barcode, reads in read_storage['barcodes'].items():
             if barcode in valid_barcodes:
                 output_file_path = os.path.join(output_dir, f"{barcode}.fq")
                 executor.submit(task, write_reads_to_file, reads, output_file_path)
-        
+
         ### Write wildtype and unclassified reads if they exist ###
         if read_storage['wildtype']:
             wt_file_path = os.path.join(output_dir, "wildtype.fq")
             executor.submit(task, write_reads_to_file, read_storage['wildtype'], wt_file_path)
-        
+
         if read_storage['unclassified']:
             unclassified_file_path = os.path.join(output_dir, "unclassified.fq")
             executor.submit(task, write_reads_to_file, read_storage['unclassified'], unclassified_file_path)
@@ -285,7 +334,7 @@ def distribute_and_process_sam_files(input_dir, output_dir):
     total_files = len(sam_files)
 
     ### generates a repeating sequence from 1 to arr_number specified in minigene_config.yaml ###
-    group_numbers = [i % arr_number + 1 for i in range(total_files)]                                                                
+    group_numbers = [i % arr_number + 1 for i in range(total_files)]
     with ProcessPoolExecutor(max_workers=max_workers) as executor:
         futures = []
         for sam_file, group_number in zip(sam_files, group_numbers):
@@ -307,7 +356,7 @@ def main():
     create_directories()
 
     index_reference(reference_fasta)
-    
+
     chopper_start_time = time.time()
     choppered_fastq_path = run_chopper(fastq_path, chopper_minigenes_dir)
     chopper_end_time = time.time()
@@ -326,7 +375,7 @@ def main():
 
     demux_start_time = time.time()
     write_reads_to_file_parallel(read_storage, valid_barcodes, demuxed_dir)
-    print(f"Number of barcode files not written due to read counts < barcode_threshold ({barcode_threshold}): {num_barcodes_not_written}")
+    print(f"{num_barcodes_not_written} barcodes discarded due to barcode rank < barcode rank threshold of {barcode_rank_threshold} and barcode frequency < {barcode_freq_threshold}")
     print("FASTQ file generation complete.")
     demux_end_time = time.time()
     print(f"Time taken to demultiplex fastq by filtered barcodes: {demux_end_time - demux_start_time:.3f} seconds")
@@ -344,3 +393,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+

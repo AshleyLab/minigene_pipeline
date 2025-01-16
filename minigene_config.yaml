@@ -1,18 +1,26 @@
 # Number of CPU cores available; adjust according to system's capabilities#
 max_workers: 32
 
-# VARIABLES FOR SETUP.PY (SCRIPT 1) #
+
+
+##########################################################################################
+                     ### VARIABLES FOR SETUP.PY (SCRIPT 1) ###
+##########################################################################################
+
 # path to fastq file to be analysed for variant-barcode relationship #
 fastq_path: "/oak/stanford/groups/euan/projects/kaiser/MYBPC3/data/splicelib_5k.fastq"
 
 # minimum Phred average quality score to filter DNA fastq file #
 DNA_baseq_threshold: 10
 
+# gene analysed
+gene: "MYBPC3"
+
 # path to reference fasta #
 reference_fasta: "/oak/stanford/groups/euan/projects/kaiser/MYBPC3/data/MYBPC3_amp.fa"
 
 # path to the directory for all output files #
-root_output_dir: "/oak/stanford/groups/euan/projects/kaiser/MYBPC3/MYBPC3_analysis"
+root_output_dir: "/oak/stanford/groups/euan/projects/kaiser/MYBPC3/MYBPC3_analysis_test_env"
 
 # forward sequences of barcode prefix and suffix #
 fw_barcode_prefix: "CCACCCAG"
@@ -25,16 +33,30 @@ rev_barcode_suffix: "CTGGGTGG"
 # length of barcode #
 barcode_length: 12
 
+# stringency of barcode filtering by kneepoint (minimum = 1 (least stringent), maximum = 1.5 (most stringent)) #
+k: 1.3
+
 # depending on how many barcodes you expect to have e.g. 20 for 5000 barcodes is optimal # 
 arr_number: 20
 
-# VARIABLES FOR DEEPVARIANT #
+
+
+##########################################################################################
+                         ### VARIABLES FOR DEEPVARIANT ###
+##########################################################################################
+
+# path to deepvariant singularity image #
+deep_variant_sif: "/oak/stanford/groups/euan/projects/variant_effect_mapping/tools/DeepVariant/deepvariant_1.6.1.sif"
 
 # adjust according to your sequencing data type (WGS,WES,PACBIO,ONT_R104 or HYBRID_PACBIO_ILLUMINA) #
 model_type: "ONT_R104"
 
 
-# VARIABLES FOR PROCESS_VARIANTS.PY (SCRIPT 2) #
+
+##########################################################################################
+                  ### VARIABLES FOR PROCESS_VARIANTS.PY (SCRIPT 2) ###
+##########################################################################################
+
 # start and ends of mutagenisis position with respect to reference sequence #
 mut_region_start: 456
 mut_region_end: 599
@@ -100,7 +122,12 @@ index_sequence_patterns:
     rev_front: "AGGCTCCG"
     rev_end: "ATTAGACG"
 
-# VARIABLES FOR BARCODE_CODON_RS.PY (REPLACE WITH " " IF YOUR ANALYSIS DOES NOT REQUIRE AMINO ACID DETERMINATION) #
+
+
+##########################################################################################
+                  ### VARIABLES FOR BARCODE_CODON_RS.PY ###
+##########################################################################################
+# REPLACE WITH " " IF YOUR ANALYSIS DOES NOT REQUIRE AMINO ACID DETERMINATION) #
 
 # file path of qc report for variant library #
 qc_report: "/oak/stanford/groups/euan/projects/kaiser/MYBPC3/MYBPC3_QC.xlsx"

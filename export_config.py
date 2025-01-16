@@ -10,6 +10,7 @@ def export_variables(config):
     print(f'ROOT_OUTPUT_DIR="{config["root_output_dir"]}"')
     print(f'REFERENCE_FASTA="{config["reference_fasta"]}"')
     print(f'ARR_NUMBER="{config["arr_number"]}"')
+    print(f'DEEP_VARIANT_SIF="{config["deep_variant_sif"]}"')
     print(f'MODEL_TYPE="{config["model_type"]}"')
 
 def main(argv):

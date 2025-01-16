@@ -52,6 +52,7 @@ BAM_FILES_DIR="${BASE_OUTPUT_DIR}/bam_files"
 FLAG_FILE="${BASE_OUTPUT_DIR}/initial_setup_done.flag"
 REFERENCE_FASTA="${REFERENCE_FASTA}"
 ARR_NUMBER="${ARR_NUMBER}"
+DEEP_VARIANT_SIF="${DEEP_VARIANT_SIF}"
 MODEL_TYPE="${MODEL_TYPE}"
 
 if [ ! -f "$FLAG_FILE" ]; then
@@ -97,7 +98,7 @@ if [ ! -f "$FLAG_FILE" ]; then
 else
     echo "Running DeepVariant processing for task $SLURM_ARRAY_TASK_ID..."
 
-    singularity_image="/oak/stanford/groups/euan/projects/variant_effect_mapping/tools/DeepVariant/deepvariant_1.6.1.sif"
+    singularity_image="${DEEP_VARIANT_SIF}"
     reference_fasta="${REFERENCE_FASTA}"
     model_type="${MODEL_TYPE}"
     num_shards=1
