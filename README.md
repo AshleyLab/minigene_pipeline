@@ -3,21 +3,25 @@ Single nucleotide variants (SNVs) were introduced into the mutagenesis region, s
 
 <img width="1386" alt="Screenshot 2024-06-26 at 1 54 09 PM" src="https://github.com/AshleyLab/VxE_Map/assets/96602087/956a3e16-a8a3-4c5c-8070-8db5cdf986ec">
 
-#### Installation of Minigene Pipeline
+#### Installation of Minigene Pipeline on Sherlock
 1. Log in to Sherlock and navigate to directory where results are to be stored i.e. target_dir
 2. Copy minigene_pipeline directory into your target directory using the below command  
    ```  
-   cp -r /oak/stanford/groups/euan/projects/variant_effect_mapping/minigene_splicing_assay /path/to/target_dir
+   cp -r /oak/stanford/groups/euan/projects/variant_effect_mapping/minigene_pipeline /path/to/target_dir
 #### Setting Up Minigene Pipeline's Environment
-3. Navigate into copied minigene_splicing_assay directory
+3. Navigate into copied minigene_pipeline directory
    ```
-   cd /path/to/target_dir/minigene_splicing_assay
+   cd /path/to/target_dir/minigene_pipeline
 4. Ensure that Python 3.12 is installed on your system. Install it otherwise before proceeding.
-5. Create and activate minigene_env 
+5. Install singularity image of DeepVariant (v1.8.0)
    ```
-   python3.12 -m venv minigene_env       # create new python virtual env
-   source minigene_env/bin/activate      # activate minigene_env
-6. Install packages
+   BIN_VERSION="1.8.0"
+   singularity pull docker://google/deepvariant:"${BIN_VERSION}"
+6. Create and activate minigene_env 
+   ```
+   python3.12 -m venv minigene_env      # create new python virtual env
+   source minigene_env/bin/activate     # activate minigene_env
+7. Install packages
    ```
    pip install --upgrade pip
    pip install -r requirements.txt    
@@ -27,50 +31,61 @@ Single nucleotide variants (SNVs) were introduced into the mutagenesis region, s
    unzip chopper-musl.zip -d chopper_bin
    mv chopper_bin/chopper minigene_env/bin
    chmod +x minigene_env/bin/chopper
-   chopper --version                     # affirm that chopper was installed properly
+   chopper --version                    # affirm that chopper was installed properly
 
    # Install minimap2 (2.28 (r1209))
    wget https://github.com/lh3/minimap2/releases/download/v2.28/minimap2-2.28_x64-linux.tar.bz2
    tar -xvf minimap2-2.28_x64-linux.tar.bz2
    mv minimap2-2.28_x64-linux/minimap2 minigene_env/bin
-   minimap2 --version                    # affirm that minimap2 was installed properly
+   minimap2 --version                   # affirm that minimap2 was installed properly
+
+   # Install GMAP (Version 2024-11-20)
+   wget http://research-pub.gene.com/gmap/src/gmap-gsnap-2024-11-20.tar.gz
+   tar -xvzf gmap-gsnap-2024-11-20.tar.gz
+   cd gmap-2024-11-20
+   ./configure --prefix=/path/to/target_dir/minigene_pipeline/minigene_env
+   make
+   make install
+   cd ..
+   gmap --version                       # affirm that gmap was installed properly  
 
    # Install Samtools (v1.16.1)
    wget https://github.com/samtools/samtools/releases/download/1.16.1/samtools-1.16.1.tar.bz2
    tar -xvjf samtools-1.16.1.tar.bz2 
    cd samtools-1.16.1/
-   ./configure --prefix=/oak/stanford/groups/euan/projects/kaiser/MYBPC3/minigene_splicing_assay/minigene_env --disable-lzma --without-curses
+   ./configure --prefix=/path/to/target_dir/minigene_pipeline/minigene_env --disable-lzma --without-curses
    make
    make install
    cd ..                                                                  
-   samtools --version                    # affirm that samtools was installed properly  
+   samtools --version                   # affirm that samtools was installed properly  
 
    # Clean up
-   rm samtools-1.16.1.tar.bz2 chopper-musl.zip minimap2-2.28_x64-linux.tar.bz2
-   rm -r samtools-1.16.1 chopper_bin minimap2-2.28_x64-linux
+   rm gmap-gsnap-2024-11-20.tar.gz samtools-1.16.1.tar.bz2 chopper-musl.zip minimap2-2.28_x64-linux.tar.bz2
+   rm -r gmap-2024-11-20 samtools-1.16.1 chopper_bin minimap2-2.28_x64-linux
 #### Execution
-7. Edit minigene_config.yaml file to suit your data
+8. Edit minigene_config.yaml file to suit your data
    ```
    vim minigene_config.yaml
    
    # press 'i' to edit and make changes; when done, press 'esc', ':wq' and hit 'enter'
-8. Navigate into log directory
+9. Navigate into log directory
    ```
    cd log
 
-   # full path of log dir = "/path/to/target_dir/minigene_splicing_assay/log
-9. Execute minigene pipeline
-   ```
-   # For analysis of only barcode-SNV relationship, do:
-   sbatch /path/to/target_dir/minigene_splicing_assay/minigene_pipeline.sbatch /path/to/target_dir/minigene_splicing_assay "" false
-
-   # For analysis of barcode-codon relationship, do:
-   sbatch /path/to/target_dir/minigene_splicing_assay/minigene_pipeline.sbatch /path/to/target_dir/minigene_splicing_assay barcode_codon_rs.py
-
-   # For full analysis including isoform processing, do:
-   sbatch /path/to/target_dir/minigene_splicing_assay/minigene_pipeline.sbatch /path/to/target_dir/minigene_splicing_assay
-#### Tools:
+   # full path of log dir = "/path/to/target_dir/minigene_pipeline/log
+10. Execute minigene pipeline
+    ```
+    # For analysis of only barcode-SNV relationship, do:
+    sbatch /path/to/target_dir/minigene_pipeline/minigene_pipeline.sbatch /path/to/target_dir/minigene_pipeline "" false
+    
+    # For analysis of barcode-codon relationship, do:
+    sbatch /path/to/target_dir/minigene_pipeline/minigene_pipeline.sbatch /path/to/target_dir/minigene_pipeline barcode_codon_rs.py
+    
+    # For full analysis including isoform processing, do:
+    sbatch /path/to/target_dir/minigene_pipeline/minigene_pipeline.sbatch /path/to/target_dir/minigene_pipeline
+#### Tools
 samtools: [samtools](https://github.com/samtools/samtools)  
 chopper: [chopper](https://github.com/wdecoster/chopper)  
 minimap2: [minimap2](https://github.com/lh3/minimap)  
-deepvariant: [deepvariant](https://github.com/google/deepvariant)
+deepvariant: [deepvariant](https://github.com/google/deepvariant)   
+GMAP: [GMAP](http://research-pub.gene.com/gmap)
