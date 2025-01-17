@@ -23,7 +23,7 @@ Single nucleotide variants (SNVs) were introduced into the mutagenesis region, s
    source minigene_env/bin/activate     # activate minigene_env
 7. Install packages
    ```
-   python3 install_minigene_tools.py
+   python3 setup_minigene_env.py 
 #### Execution
 8. Edit minigene_config.yaml file to suit your data
    ```

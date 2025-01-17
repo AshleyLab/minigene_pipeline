@@ -13,6 +13,14 @@ def run_command(command, check=True):
         print(f"Error: Command '{command}' failed with exit code {e.returncode}")
         sys.exit(1)
 
+def ensure_plotly_installed():
+    """Ensure Plotly is installed in the virtual environment."""
+    try:
+        import plotly
+    except ImportError:
+        print("Plotly is not installed. Installing it now...")
+        run_command("pip install plotly==5.24.1")
+
 def main():
     # Ensure script is running in a virtual environment
     if not hasattr(sys, 'real_prefix') and not (hasattr(sys, 'base_prefix') and sys.base_prefix != sys.prefix):
@@ -28,6 +36,9 @@ def main():
     # Upgrade pip and install Python dependencies
     run_command("pip install --upgrade pip")
     run_command("pip install -r requirements.txt")
+
+    # Ensure Plotly is installed
+    ensure_plotly_installed()
 
     # Install Chopper
     run_command("wget https://github.com/wdecoster/chopper/releases/download/v0.7.0/chopper-musl.zip")
