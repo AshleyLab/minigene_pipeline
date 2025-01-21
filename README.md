@@ -13,9 +13,9 @@ Single nucleotide variants (SNVs) were introduced into the mutagenesis region, s
    ```
    cd /path/to/target_dir/minigene_pipeline
 4. Ensure that Python 3.12 is installed on your system. Install it otherwise before proceeding.
-5. Install singularity image of DeepVariant (v1.8.0)
+5. Install singularity image of DeepVariant (v1.6.1 (CPU version))
    ```
-   BIN_VERSION="1.8.0"
+   BIN_VERSION="1.6.1"
    singularity pull docker://google/deepvariant:"${BIN_VERSION}"
 6. Create and activate minigene_env 
    ```
