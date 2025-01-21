@@ -46,7 +46,7 @@ arr_number: 20
 ##########################################################################################
 
 # path to deepvariant singularity image #
-deep_variant_sif: "/oak/stanford/groups/euan/projects/variant_effect_mapping/tools/DeepVariant/deepvariant_1.6.1.sif"
+deepvariant_sif: "/oak/stanford/groups/euan/projects/variant_effect_mapping/tools/DeepVariant/deepvariant_1.6.1.sif"
 
 # adjust according to your sequencing data type (WGS,WES,PACBIO,ONT_R104 or HYBRID_PACBIO_ILLUMINA) #
 model_type: "ONT_R104"
