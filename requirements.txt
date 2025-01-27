@@ -29,6 +29,7 @@ mdurl==0.1.2
 memory-profiler==0.61.0
 nanoQC==0.9.4
 numpy==1.26.4
+openpyxl==3.1.5
 packaging==23.2
 pandas==2.2.2
 panel==1.4.4
