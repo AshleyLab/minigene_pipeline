@@ -1,7 +1,7 @@
 ### Minigene Pipeline
 Single nucleotide variants (SNVs) were introduced into the mutagenesis region, spanning both introns and exons of a minigene plasmid containing the target exon. Additionally, random 12 bp barcodes, flanked by a constant 8 bp prefix and suffix, were also incorporated into the plasmid's exon. The modified minigene plasmid was then transfected into iPSCs and HEK cells and sequenced post-transcription using ONT. The pipeline has 3 features. The first feature, at the most foundational level, identifies barcode-SNV relationship, while the second feature identifies barcode-amino acid relationship. The third feature permits splicing analysis, which includes processing the ONT cDNA data, produces statistical reports in CSVs and visualisations in PDFs of the different isoforms found as a result of different SNVs. The workflow is illustrated below.
 
-<img width="1386" alt="Screenshot 2024-06-26 at 1 54 09 PM" src="https://github.com/AshleyLab/VxE_Map/assets/96602087/956a3e16-a8a3-4c5c-8070-8db5cdf986ec">
+<img width="1711" alt="Image" src="https://github.com/user-attachments/assets/fef6b66e-def9-451a-9d4c-22338d8a1f76" />
 
 #### Installation of Minigene Pipeline on Sherlock
 1. Log in to Sherlock and navigate to directory where results are to be stored i.e. target_dir
