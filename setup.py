@@ -73,7 +73,7 @@ def create_directories():
 ################################
 
 def index_reference(reference_fasta):
-    """Checks if reference FASTA file is indexed; if not, generates the index using samtools faidx."""
+    """Checks for *.fa.fai file; if not, generates the index using samtools faidx"""
     fai_file = f"{reference_fasta}.fai"
     if not os.path.exists(fai_file):
         print(f"Index file {fai_file} not found. Generating index...")
@@ -213,8 +213,8 @@ def process_barcode_counts(df_barcode_counts):
 
     ### Find the index of the maximum distance ###
     knee_idx = np.argmax(distances)
-    knee_x = 10 ** x[knee_idx]  # Convert from log scale to original scale
-    knee_y = 10 ** y[knee_idx]  # Convert from log scale to original scale
+    knee_x = 10 ** x[knee_idx]                                                          ### convert from log scale to original scale ###
+    knee_y = 10 ** y[knee_idx]                                                          ### convert from log scale to original scale ###
 
     ### Get barcode rank and count threshold ###
     barcode_rank_threshold = int(round(k * knee_x))

@@ -2,7 +2,6 @@
 max_workers: 32
 
 
-
 ##########################################################################################
                      ### VARIABLES FOR SETUP.PY (SCRIPT 1) ###
 ##########################################################################################
@@ -20,7 +19,7 @@ gene: "MYBPC3"
 reference_fasta: "/oak/stanford/groups/euan/projects/kaiser/MYBPC3/data/MYBPC3_amp.fa"
 
 # path to the directory for all output files #
-root_output_dir: "/oak/stanford/groups/euan/projects/kaiser/MYBPC3/MYBPC3_analysis_test_env"
+root_output_dir: "/oak/stanford/groups/euan/projects/kaiser/MYBPC3/MYBPC3_analysis"
 
 # forward sequences of barcode prefix and suffix #
 fw_barcode_prefix: "CCACCCAG"
@@ -33,12 +32,8 @@ rev_barcode_suffix: "CTGGGTGG"
 # length of barcode #
 barcode_length: 12
 
-# stringency of barcode filtering by kneepoint (minimum = 1 (most stringent), maximum = 1.5 (least stringent)) #
+# stringency of barcode filtering by kneepoint (minimum = 1 (least stringent), maximum = 1.5 (most stringent)) #
 k: 1.3
-
-# depending on how many barcodes you expect to have e.g. 20 for 5000 barcodes is optimal # 
-arr_number: 20
-
 
 
 ##########################################################################################
@@ -52,20 +47,22 @@ deepvariant_sif: "/oak/stanford/groups/euan/projects/variant_effect_mapping/tool
 model_type: "ONT_R104"
 
 
-
 ##########################################################################################
                   ### VARIABLES FOR PROCESS_VARIANTS.PY (SCRIPT 2) ###
 ##########################################################################################
 
 # start and ends of mutagenisis position with respect to reference sequence #
-mut_region_start: 456
-mut_region_end: 599
+mut_regions:
+  - [456, 599]
 
 # variants that failed qc in the format of ["var1", "var2", "var3", "var4", ...]. if none, replace with empty list [] - failed_variants: [] #
 failed_variants: ["464T>A", "464T>G"]
 
 
-# VARIABLES FOR SPLICE_ANALYSIS.PY (SCRIPT 3) #
+##########################################################################################
+                  ### VARIABLES FOR SPLICE_ANALYSIS.PY (SCRIPT 3) ###
+##########################################################################################
+
 # path of fastq file for splicing analysis # 
 cDNA_fastq_file: "/oak/stanford/groups/euan/projects/kaiser/MYBPC3/data/spmix_cDNA.fastq"
 
@@ -75,7 +72,7 @@ cDNA_baseq_threshold: 10
 # name of your gene to be analysed #
 database_name: "MYBPC3"
 
-# start and end positions of your reference sequence to build filter_sites_file; only change ref_end_pos #
+# start and end positions of your reference sequence starting from pos 1; only change ref_end_pos #
 ref_start_pos: 1
 ref_end_pos: 1238
 
@@ -122,12 +119,10 @@ index_sequence_patterns:
     rev_front: "AGGCTCCG"
     rev_end: "ATTAGACG"
 
-
-
 ##########################################################################################
                   ### VARIABLES FOR BARCODE_CODON_RS.PY ###
 ##########################################################################################
 # REPLACE WITH " " IF YOUR ANALYSIS DOES NOT REQUIRE AMINO ACID DETERMINATION) #
 
 # file path of qc report for variant library #
-qc_report: "/oak/stanford/groups/euan/projects/kaiser/MYBPC3/MYBPC3_QC.xlsx"
+qc_report: " "

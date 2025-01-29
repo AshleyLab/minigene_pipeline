@@ -1,3 +1,5 @@
+### PYTHON SCRIPT 2 ###
+
 import os
 import yaml
 from concurrent.futures import ProcessPoolExecutor
@@ -13,7 +15,7 @@ config_file = os.path.join(minigene_dir, "minigene_config.yaml")
 with open(config_file, 'r') as f:
     config = yaml.safe_load(f)
 
-###  Assign variables from minigene_config.yaml ###
+### Assign variables from minigene_config.yaml ###
 root_output_dir = config["root_output_dir"]
 reference_fasta = config["reference_fasta"]
 deepvariant_sif = config["deepvariant_sif"]

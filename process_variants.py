@@ -1,4 +1,4 @@
-### PYTHON SCRIPT 2 (AFTER DEEPVARIANT) ###
+### PYTHON SCRIPT 3 ###
 
 import os
 import yaml
@@ -29,14 +29,13 @@ config_file = os.path.join(minigene_dir, "minigene_config.yaml")
 with open(config_file, 'r') as f:
     config = yaml.safe_load(f)
 
-###  Assign variables from minigene_config.yaml ###
+### Assign variables from minigene_config.yaml ###
 root_output_dir = config["root_output_dir"]
-mut_region_start = config["mut_region_start"]
-mut_region_end = config["mut_region_end"]
+mut_regions = config["mut_regions"]
 failed_variants = config["failed_variants"]
 max_workers = config["max_workers"]
 
-### define and create directories ###
+### Define and create directories ###
 base_output_dir = os.path.join(root_output_dir, "variant_barcode_results")
 deepvariant_dir = os.path.join(base_output_dir, "deepvariant")
 post_process_variants_dir = os.path.join(base_output_dir, "postprocess_variants")
@@ -79,7 +78,7 @@ def read_process_vcf(file_path):
 
 def process_vcf(deepvariant_dir):
     """
-    Extract and filters variant info from *.vcf.gz files before saving the results to CSV and text files
+    Extract and filters variant info from *.vcf.gz files before saving the results to CSV and txt files
 
     Parameters:
     -----------
@@ -110,8 +109,13 @@ def process_vcf(deepvariant_dir):
     final_df["VARIANT_ALLELIC_DEPTH"] = final_df["VARIANT_ALLELIC_DEPTH"].str.split(':').str[3].str.split(',').str[1]           ### extract variant allelic depth from 'default' column ###
     final_df['POS'] = final_df['POS'].astype(int)
 
+    ### Create a combined condition for mut_df (rows within mutagenesis region(s)) and non_mut_df (rows outside mutagenesis region(s)) ###
+    mut_condition = False
+    for start, end in mut_regions:
+        mut_condition |= (final_df['POS'] >= start) & (final_df['POS'] <= end)
+
     ### separate out variants found outside mutagenesis region in non_mut_df ###
-    non_mut_df = final_df[(final_df['POS'] < mut_region_start) | (final_df['POS'] > mut_region_end)]                            ### filter df for variants with 'POS' found outside mutagenesis region ###
+    non_mut_df = final_df[~mut_condition]
     non_mut_df = non_mut_df[["BARCODE", "VARIANT", "VARIANT_QUAL", "VARIANT_ALLELIC_DEPTH"]]
     non_mut_df = non_mut_df.groupby('VARIANT').agg({
         'BARCODE': [('BARCODES', lambda x: ','.join(x)),                                                                        ### concat all barcodes associate with specific variant and split by ',' ###
@@ -125,7 +129,7 @@ def process_vcf(deepvariant_dir):
     non_mut_df = non_mut_df.reset_index(drop=True)
 
     ### separate out variants found within mutagenesis region in mut_df ###
-    mut_df = final_df[(final_df['POS'] >= mut_region_start) & (final_df['POS'] <= mut_region_end)]                              ### filter df for variants in mutagenesis region ###
+    mut_df = final_df[mut_condition]
     mut_df = mut_df[["BARCODE", "VARIANT", "VARIANT_QUAL", "VARIANT_ALLELIC_DEPTH"]]
     mut_df = mut_df.groupby('VARIANT').agg({
         'BARCODE': [('BARCODES', lambda x: ','.join(x)),
@@ -140,7 +144,7 @@ def process_vcf(deepvariant_dir):
 
     ### clean 'mut_df' and 'non_mut_df' ###
     mut_df['BARCODE'] = mut_df['BARCODE'].apply(lambda x: x.split(','))                                                         ### splits each string in mut_df and non_mut_df's 'BARCODE' column at every ',' to give a list of substrings ###
-    mut_df['VARIANT_QUAL'] = mut_df['VARIANT_QUAL'].apply(lambda x: [float(q) for q in x.split(',')])                                           ### transforms mut_df[]'QUAL'] from a single string with comma-separated numerical values into a list of float values ###
+    mut_df['VARIANT_QUAL'] = mut_df['VARIANT_QUAL'].apply(lambda x: [float(q) for q in x.split(',')])                           ### transforms mut_df[]'QUAL'] from a single string with comma-separated numerical values into a list of float values ###
     mut_df['VARIANT_ALLELIC_DEPTH'] = mut_df['VARIANT_ALLELIC_DEPTH'].apply(lambda x: [int(q) for q in x.split(',')])           ### transforms mut_df['VARIANT_ALLELIC_DEPTH'] from a single string with comma-separated numerical values into a list of integer values ###
 
     non_mut_df['BARCODE'] = non_mut_df['BARCODE'].apply(lambda x: x.split(','))
@@ -189,7 +193,7 @@ def process_vcf(deepvariant_dir):
     main_updated_mut_df = updated_mut_df[["VARIANT", "BARCODE", "UNIQUE_BARCODE_COUNT", "TOTAL_VARIANT_ALLELIC_DEPTH", "VARIANT_QUAL"]]
     main_updated_mut_df_path = os.path.join(post_process_variants_dir, "SNV_barcode_info.csv")
     main_updated_mut_df.to_csv(main_updated_mut_df_path, index=False)
-   
+
     ### extract non-unique and unique barcodes and save to non_unique_barcode.txt and barcode.txt file respectively ###
     barcodes = updated_mut_df['BARCODE'].str.split(',').explode()
 
@@ -249,11 +253,11 @@ def plot_SNV_plots(main_updated_mut_df):
         """
         new_rows = []
         seen_variants = set(main_updated_mut_df['VARIANT'])                                                                     ### track variants already seen (original + newly added) ###
-        
+
         ### loop through each row in main_updated_mut_df ###
         for index, row in main_updated_mut_df.iterrows():
             variant = row['VARIANT']
-            
+
             position = ''.join(filter(str.isdigit, variant))                                                                    ### extract SNV's position ###
             ref_base = variant.split('>')[0][-1]                                                                                ### extract SNV's reference base ###
 
@@ -269,75 +273,78 @@ def plot_SNV_plots(main_updated_mut_df):
         new_main_updated_mut_df = pd.DataFrame(new_rows)
         main_updated_mut_df = pd.concat([main_updated_mut_df, new_main_updated_mut_df], ignore_index=True)
 
-        return main_updated_mut_df                                                                                            
+        return main_updated_mut_df
 
     ### call add_ref_to_variant to main_updated_mut_df to add reference bases ###
-    main_updated_mut_df = add_ref_to_variant(main_updated_mut_df)                                               
+    main_updated_mut_df = add_ref_to_variant(main_updated_mut_df)
 
-    ### create new columns "POSITION", "REF_BASE" and "OBS_BASE" based on "VARIANT"
     main_updated_mut_df["POSITION"] = main_updated_mut_df["VARIANT"].str.extract(r'(\d+)')
     main_updated_mut_df["REF_BASE"] = main_updated_mut_df["VARIANT"].apply(lambda x: x.split('>')[0][-1])
     main_updated_mut_df["OBS_BASE"] = main_updated_mut_df["VARIANT"].apply(lambda x: x.split('>')[1])
     main_updated_mut_df = main_updated_mut_df[["VARIANT", "POSITION", "REF_BASE", "OBS_BASE", "UNIQUE_BARCODE_COUNT", "TOTAL_VARIANT_ALLELIC_DEPTH"]]
     main_updated_mut_df.sort_values(by='POSITION', inplace=True)
 
-    ### create pdf file to store plots ###
     with PdfPages(os.path.join(root_output_dir, "variant_barcode_results", "postprocess_variants", "SNV_depths_plots.pdf")) as pdf:
-        ### SNV depth heatmap ###
+        ### Plot SNV depth heatmap ###
 
-        ### pivot the data for depth_heatmap ###
+        ### pivot data for depth_heatmap ###
         depth_heatmap_data = main_updated_mut_df.pivot(index="OBS_BASE", columns="POSITION", values="TOTAL_VARIANT_ALLELIC_DEPTH")
 
-        ### determine the minimum and maximum depth values for heatmap's color bar ###
+        ### determine minimum and maximum depth values for heatmap's color bar ###
         min_depth = main_updated_mut_df['TOTAL_VARIANT_ALLELIC_DEPTH'].min()
         max_depth = main_updated_mut_df['TOTAL_VARIANT_ALLELIC_DEPTH'].max()
 
         ### create custom colormap ###
-        cmap = sns.cubehelix_palette(dark=.25, light=.75, as_cmap=True)                                                         ### varying intensities of pink-purple for present variants ###
-        blue_cmap = ListedColormap(["#BBCEF0"])                                                                                 ### light blue for reference bases ###
+        cmap = sns.cubehelix_palette(dark=.25, light=.75, as_cmap=True)
+        blue_cmap = ListedColormap(["#BBCEF0"])
 
-        ### create full range of positions within mutagenesis region  for x-axis tick labels ###
+        ### create full range of x-axis tick labels starting from start of first mutagenesis region to end of last mutagenesis region ###
+        mut_region_start = min(range[0] for range in config["mut_regions"])
+        mut_region_end = max(range[1] for range in config["mut_regions"])
         full_depth_range = list(range(mut_region_start, mut_region_end+1))
 
-        ### reindex depth_heatmap_data to ensure all positions within mutagenesis region are included ###
+        ### reindex depth_heatmap_data to ensure all positions within mutagenesis region(s) are included ###
         depth_heatmap_data = depth_heatmap_data.reindex(columns=map(str, full_depth_range))
 
-        ### recreate the mask after reindexing to match the shape of depth_heatmap_data ###
+        ### recreate the mask for reference after reindexing to match the shape of depth_heatmap_data ###
         mask = (depth_heatmap_data == 0)
 
         ### plot the heatmap ###
+        x_size = len(full_depth_range) / 6
         plt.figure(figsize=(50, 8))  
-        ax = sns.heatmap(depth_heatmap_data, cmap=cmap, annot=False, 
-                        cbar_kws={'label': 'SNV Depth', 'orientation': 'horizontal', 'location': 'bottom', 'pad': 0.3, 'shrink': 0.5, 'anchor': (1, 0)}, 
+        ax = sns.heatmap(depth_heatmap_data, cmap=cmap, annot=False,
+                        cbar_kws={'label': 'SNV Depth', 'orientation': 'horizontal', 'location': 'bottom', 'pad': 0.3, 'shrink': 0.5, 'anchor': (1, 0)},
                         mask=mask, vmin=min_depth, vmax=max_depth)
 
-        ### 0verlay the blue heatmap for reference bases ###
+        ### overlay the blue heatmap for the reference bases ###
         sns.heatmap(depth_heatmap_data, cmap=blue_cmap, mask=~mask, cbar=False, ax=ax)
 
-        ### configure colorbar of heatmap ###
-        depth_cbar = ax.collections[0].colorbar                                                                                 ### get the colorbar object ###
-        depth_cbar.ax.tick_params(labelsize=15, rotation=90)                                                                    ### set tick label size and rotation ###
-        depth_cbar_ticks = list(range(min_depth, max_depth, 1000))                                                              ### set tick range and intervals ###
+        ### configure colorbar ###
+        depth_cbar = ax.collections[0].colorbar 
+        depth_cbar.ax.tick_params(labelsize=15, rotation=90) 
+        depth_cbar_ticks = list(range(min_depth, max_depth, 1000))
         depth_cbar.set_ticks(depth_cbar_ticks)
-        depth_cbar.set_label("Variant Read Depths", fontsize=20, labelpad=10)                                                   ### set colorbar label size ###
+        depth_cbar.set_label("Variant Read Depths", fontsize=20, labelpad=10)  
 
-        ### create custom legend handles with rectangular shapes and outlines ###
+        ### create custom legend ###
         blue_legend = [plt.Line2D([0], [0], marker="s", color="#BBCEF0", markersize=49, markeredgecolor="black", markeredgewidth=0.5, linestyle='None')]
         white_legend = [plt.Line2D([0], [0], marker="s", color="white", markersize=49, markeredgecolor="black", markeredgewidth=0.5, linestyle='None')]
         labels = ["Reference Bases", "Variants Not Found"]
         handles = blue_legend + white_legend
-        plt.legend(handles, labels, loc="lower center", bbox_to_anchor=(0.58, -0.83), ncols=2, frameon=False, fontsize=20, columnspacing=3)  
+        plt.legend(handles, labels, loc="lower center", bbox_to_anchor=(0.58, -0.83), ncols=2, frameon=False, fontsize=20, columnspacing=3)
 
-        ### configure heatmap ticks on both x and y axes ###
-        tick_positions = range(len(full_depth_range)) 
-        adjusted_tick_positions = [pos + 0.43 for pos in tick_positions] 
-        ax.set_xticks(adjusted_tick_positions)  
+        ### configure x-ticks to show the full range from start of first mutagenesis region to end of last mutagenesis region ###
+        tick_positions = range(len(full_depth_range))                                                                         
+        adjusted_tick_positions = [pos + 0.43 for pos in tick_positions]                                                
+        ax.set_xticks(adjusted_tick_positions) 
         ax.set_xticklabels(full_depth_range, rotation=90, fontsize=11, ha='left')
         ax.tick_params(axis='x', which='major', tick1On=True, tick2On=False, pad=1.5)
         ax.tick_params(axis='y', which='major', tick1On=False, tick2On=False, pad=0)
+
+        ### configure y-ticks ###
         plt.yticks(rotation=0, fontsize=20)
 
-        ### configure title and axes labels ###
+        ### set labels and title ###
         plt.title("Heatmap of SNV Depths", fontsize=50, pad=50)
         plt.xlabel("Position", fontsize=30, labelpad=30)
         plt.ylabel("Observed Base", fontsize=30, labelpad=30)
@@ -347,61 +354,62 @@ def plot_SNV_plots(main_updated_mut_df):
         pdf.savefig()
         plt.close()
 
-        ### SNV barcode heatmap ###
-
-        ### pivot the data for barcode_heatmap ###
+        ### Plot SNV barcode heatmap ###
+        ### pivot the data for depth_heatmap ###
         barcode_heatmap_data = main_updated_mut_df.pivot(index="OBS_BASE", columns="POSITION", values="UNIQUE_BARCODE_COUNT")
 
-        ### Determine the minimum and maximum count values for heatmap's color bar ###
+        ### determine minimum and maximum depth values for heatmap's color bar ###
         min_count = main_updated_mut_df['UNIQUE_BARCODE_COUNT'].min()
         max_count = main_updated_mut_df['UNIQUE_BARCODE_COUNT'].max()
 
-        ### create custom colormap for present variants and reference bases ###
+        ### create custom colormap ###
         cmap = sns.cubehelix_palette(dark=.25, light=.75, as_cmap=True)
         blue_cmap = ListedColormap(["#BBCEF0"])
 
-        ### create the full range of positions within mutagenesis region for x-axis tick labels ###
+        ### create full range of x-axis tick labels starting from start of first mutagenesis region to end of last mutagenesis region ###
         full_count_range = list(range(mut_region_start, mut_region_end+1))
 
-        ### reindex the barcode_heatmap_data to ensure all positions within mutagenesis region are included ###
+        ### reindex barcode_heatmap_data to ensure all positions within mutagenesis region(s) are included ###
         barcode_heatmap_data = barcode_heatmap_data.reindex(columns=map(str, full_count_range))
 
-        ### recreate the mask after reindexing to match the shape of barcode_heatmap_data ###
+        ### recreate the mask for reference after reindexing to match the shape of barcode_heatmap_data ###
         mask = (barcode_heatmap_data == 0)
 
-        ### Plot the heatmap ###
-        plt.figure(figsize=(50, 8)) 
-        ax = sns.heatmap(barcode_heatmap_data, cmap=cmap, annot=False, 
-                        cbar_kws={'label': 'SNV Depth', 'orientation': 'horizontal', 'location': 'bottom', 'pad': 0.3, 'shrink': 0.5, 'anchor': (1, 0)}, 
+        ### plot the heatmap ###
+        plt.figure(figsize=(50, 8))  
+        ax = sns.heatmap(barcode_heatmap_data, cmap=cmap, annot=False,
+                        cbar_kws={'label': 'SNV Depth', 'orientation': 'horizontal', 'location': 'bottom', 'pad': 0.3, 'shrink': 0.5, 'anchor': (1, 0)},
                         mask=mask, vmin=min_count, vmax=max_count)
 
-        ### overlay the blue heatmap for reference bases ###
+        ### overlay the blue heatmap for the reference bases ###
         sns.heatmap(barcode_heatmap_data, cmap=blue_cmap, mask=~mask, cbar=False, ax=ax)
 
-        ### configure colorbar of barcode count heatmap ###
+        ### configure colorbar ###
         count_cbar = ax.collections[0].colorbar  
         count_cbar.ax.tick_params(labelsize=15) 
         count_cbar_ticks = list(range(min_count, max_count, 5))
         count_cbar.set_ticks(count_cbar_ticks)
-        count_cbar.set_label("Number of Unique Barcodes per SNV", fontsize=20, labelpad=10) 
+        count_cbar.set_label("Number of Unique Barcodes per SNV", fontsize=20, labelpad=10)  
 
-        ### create custom legend handles with rectangular shapes and outlines ###
+        ### create custom legend ###
         blue_legend = [plt.Line2D([0], [0], marker="s", color="#BBCEF0", markersize=49, markeredgecolor="black", markeredgewidth=0.5, linestyle='None')]
         white_legend = [plt.Line2D([0], [0], marker="s", color="white", markersize=49, markeredgecolor="black", markeredgewidth=0.5, linestyle='None')]
         labels = ["Reference Bases", "Variants Not Found"]
         handles = blue_legend + white_legend
-        plt.legend(handles, labels, loc="lower center", bbox_to_anchor=(0.58, -0.83), ncols=2, frameon=False, fontsize=20, columnspacing=3)  
+        plt.legend(handles, labels, loc="lower center", bbox_to_anchor=(0.58, -0.83), ncols=2, frameon=False, fontsize=20, columnspacing=3)
 
-        ### configure x and y axes tick labels ###
-        tick_positions = range(len(full_count_range)) 
+        ### configure x-ticks to show the full range from start of first mutagenesis region to end of last mutagenesis region ###
+        tick_positions = range(len(full_count_range))  
         adjusted_tick_positions = [pos + 0.43 for pos in tick_positions]
         ax.set_xticks(adjusted_tick_positions) 
         ax.set_xticklabels(full_count_range, rotation=90, fontsize=11, ha='left')
         ax.tick_params(axis='x', which='major', tick1On=True, tick2On=False, pad=1.5)
         ax.tick_params(axis='y', which='major', tick1On=False, tick2On=False, pad=0)
+
+        ### configure y-ticks ###
         plt.yticks(rotation=0, fontsize=20)
 
-        ### configure title and axes labels ###
+        ### set labels and title ###
         plt.title("Heatmap of Unique Barcode Counts per SNV", fontsize=50, pad=50)
         plt.xlabel("Position", fontsize=30, labelpad=30)
         plt.ylabel("Observed Base", fontsize=30, labelpad=30)
@@ -411,18 +419,11 @@ def plot_SNV_plots(main_updated_mut_df):
         pdf.savefig()
         plt.close()
 
-### flag file to remove ###
-def remove_flag_file(root_output_dir, flag_filename="initial_setup_done.flag"):
-    flag_path = os.path.join(root_output_dir, "variant_barcode_results", flag_filename)
-    if os.path.exists(flag_path):
-        os.remove(flag_path)
-    else:
-        print(f"{flag_path} does not exist - nothing to remove.")
-
 def main():
     main_updated_mut_df = process_vcf(deepvariant_dir)
     plot_SNV_plots(main_updated_mut_df)
-    remove_flag_file(root_output_dir)
 
 if __name__ == "__main__":
     main()
+
+
