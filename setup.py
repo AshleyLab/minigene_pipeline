@@ -224,15 +224,15 @@ def process_barcode_counts(df_barcode_counts):
     fig = go.Figure()
 
     ### Add main barcode rank plot as a scatter plot ###
-    fig.add_trace(go.Scatter(x=df_barcode_counts["Barcode_Rank"] ,y=df_barcode_counts["Count"],
+    fig.add_trace(go.Scatter(x=df_barcode_counts["Barcode_Rank"], y=df_barcode_counts["Count"],
                              mode='markers', name="Barcode Rank Plot", marker=dict(color='darkblue', size=2)))
 
     ### Add barcode rank and count threshold as vertical line ###
-    fig.add_trace(go.Scatter(x=[knee_x, knee_x], y=[df_barcode_counts["Count"].min()-10, df_barcode_counts["Count"].max()], 
-                             mode='lines', name=f"Knee Point at Rank: {int(knee_x)}", line=dict(color='#800020', dash='dash')))
+    fig.add_trace(go.Scatter(x=[barcode_rank_threshold, barcode_rank_threshold], y=[1, df_barcode_counts["Count"].max()],
+                             mode='lines', name=f"Knee Point at Rank: {barcode_rank_threshold}", line=dict(color='#800020', dash='dash')))
 
     ### Add knee point as marker dot ###
-    fig.add_trace(go.Scatter(x=[knee_x], y=[knee_y], 
+    fig.add_trace(go.Scatter(x=[barcode_rank_threshold], y=[barcode_freq_threshold], 
                              mode='markers', marker=dict(color='#800020', size=10), name="knee point"))
 
     ### Update plot layout ###
