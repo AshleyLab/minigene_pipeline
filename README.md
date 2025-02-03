@@ -3,11 +3,12 @@ Single nucleotide variants (SNVs) were introduced into the mutagenesis region, s
 
 <img width="1711" alt="Image" src="https://github.com/user-attachments/assets/fef6b66e-def9-451a-9d4c-22338d8a1f76" />
 
-#### Installation of Minigene Pipeline on Sherlock
-1. Log in to Sherlock and navigate to directory where results are to be stored i.e. target_dir
-2. Copy minigene_pipeline directory into your target directory using the below command  
-   ```  
-   cp -r /oak/stanford/groups/euan/projects/variant_effect_mapping/minigene_pipeline /path/to/target_dir
+#### Installation of Minigene Pipeline 
+............................................................
+to-do:
+- create zip file and publish as release on github
+- allow users to do wget for installation
+............................................................
 #### Setting Up Minigene Pipeline's Environment
 3. Navigate into copied minigene_pipeline directory
    ```
@@ -24,27 +25,16 @@ Single nucleotide variants (SNVs) were introduced into the mutagenesis region, s
 7. Install packages
    ```
    python3 setup_minigene_env.py 
-#### Execution
+#### Configure minigene_config.yaml file
 8. Edit minigene_config.yaml file to suit your data
    ```
    vim minigene_config.yaml
    
    # press 'i' to edit and make changes; when done, press 'esc', ':wq' and hit 'enter'
-9. Navigate into log directory
+#### Execution
+9. For splice analysis:
    ```
-   cd log
-
-   # full path of log dir = "/path/to/target_dir/minigene_pipeline/log
-10. Execute minigene pipeline
-    ```
-    # For analysis of only barcode-SNV relationship, do:
-    sbatch /path/to/target_dir/minigene_pipeline/minigene_pipeline.sbatch /path/to/target_dir/minigene_pipeline "" false
-    
-    # For analysis of barcode-codon relationship, do:
-    sbatch /path/to/target_dir/minigene_pipeline/minigene_pipeline.sbatch /path/to/target_dir/minigene_pipeline barcode_codon_rs.py
-    
-    # For full analysis including isoform processing, do:
-    sbatch /path/to/target_dir/minigene_pipeline/minigene_pipeline.sbatch /path/to/target_dir/minigene_pipeline
+   python3 run_minigene_splice.py
 #### Tools
 samtools: [samtools](https://github.com/samtools/samtools)  
 chopper: [chopper](https://github.com/wdecoster/chopper)  
