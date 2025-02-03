@@ -5,9 +5,11 @@ Single nucleotide variants (SNVs) were introduced into the mutagenesis region, s
 
 #### Installation of Minigene Pipeline 
 ............................................................
+
 to-do:
 - create zip file and publish as release on github
 - allow users to do wget for installation
+
 ............................................................
 #### Setting Up Minigene Pipeline's Environment
 3. Navigate into copied minigene_pipeline directory
