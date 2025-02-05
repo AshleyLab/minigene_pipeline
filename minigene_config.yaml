@@ -32,7 +32,7 @@ rev_barcode_suffix: "CTGGGTGG"
 # length of barcode #
 barcode_length: 12
 
-# stringency of barcode filtering by kneepoint (minimum = 1 (least stringent), maximum = 1.5 (most stringent)) #
+# stringency of barcode filtering by kneepoint (minimum = 1 (most stringent), maximum = 1.5 (least stringent)) #
 k: 1.3
 
 
