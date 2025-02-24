@@ -28,6 +28,7 @@ variant_info_csv =  os.path.join(root_output_dir, "variant_barcode_results", "po
 barcode_codon_filepath = os.path.join(root_output_dir, "variant_barcode_results", "postprocess_variants", "codon_barcodes_results.csv")
 bc_more_than_1_codon_file = os.path.join(root_output_dir, "variant_barcode_results", "postprocess_variants", "barcodes_in_more_than_1_codon.csv")
 codon_depths_pdf_filepath = os.path.join(root_output_dir, "variant_barcode_results", "postprocess_variants", "variant_codon_plots.pdf")
+unique_barcodes_filepath = os.path.join(root_output_dir, "variant_barcode_results", "postprocess_variants", "unique_barcodes.txt")
 
 ### Define SNV-related file paths to remove ###
 non_unique_SNVs_filepath = os.path.join(root_output_dir, "variant_barcode_results", "postprocess_variants", "non_unique_SNV_barcodes.txt")
@@ -406,7 +407,22 @@ grouped_df['VARIANT_CODON_DEPTH'] = grouped_df['VARIANTS_DEPTH'].apply(find_smal
 ### Rearrange columns and save as barcode_codon_info.csv ###
 grouped_df_filt = grouped_df[["CODON_NUMBER", "VARIANTS", "BARCODE", "NUM_BARCODES", "WILDTYPE_CODON", "VARIANT_CODON", "WILDTYPE_AA", "VARIANT_AA", "VARIANT_CODON_DEPTH"]]
 grouped_df_filt.to_csv(barcode_codon_filepath, index=False)
-# print(grouped_df_filt)
+
+### Save unique barcodes to a text file ###
+all_barcodes = [barcode.strip() for barcodes in df["BARCODE"] for barcode in barcodes.split(", ")]                              ### flatten the barcodes into a list ###
+unique_barcodes = set()
+duplicates = set()
+
+for barcode in all_barcodes:
+    if barcode in unique_barcodes:
+        duplicates.add(barcode)
+    else:
+        unique_barcodes.add(barcode)
+
+### write unique barcodes to a text file ###
+with open(unique_barcodes_filepath, "w") as f:
+    for barcode in sorted(unique_barcodes):  
+        f.write(barcode + "\n")
 
 #####################################################################################################################################################################
                                                                 ### PLOT HISTOGRAM AND HEATMAPS ###
