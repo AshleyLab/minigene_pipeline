@@ -409,7 +409,7 @@ grouped_df_filt = grouped_df[["CODON_NUMBER", "VARIANTS", "BARCODE", "NUM_BARCOD
 grouped_df_filt.to_csv(barcode_codon_filepath, index=False)
 
 ### Save unique barcodes to a text file ###
-all_barcodes = [barcode.strip() for barcodes in df["BARCODE"] for barcode in barcodes.split(", ")]                              ### flatten the barcodes into a list ###
+all_barcodes = [barcode.strip() for barcodes in grouped_df_filt["BARCODE"] for barcode in barcodes.split(", ")]                              ### flatten the barcodes into a list ###
 unique_barcodes = set()
 duplicates = set()
 
