@@ -416,7 +416,7 @@ qc_df_report = qc_df_report.reset_index(drop=True)
 aa_global_dict = qc_df_report.set_index('AA Position')['aa_position_global'].to_dict()
 
 ### create AA_CONSEQUENCE column ###
-grouped_df_filt['AA_POSITION'] = grouped_df_filt['CODON_NUMBER'].map(aa_dict)
+grouped_df_filt['AA_POSITION'] = grouped_df_filt['CODON_NUMBER'].map(aa_global_dict)
 grouped_df_filt['AA_CONSEQUENCE'] = 'p.' + grouped_df_filt['WILDTYPE_AA'] + grouped_df_filt['AA_POSITION'].astype(str) + grouped_df_filt['VARIANT_AA']
 
 ### Rearrange columns and save as barcode_codon_info.csv ###
