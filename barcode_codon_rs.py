@@ -420,7 +420,7 @@ grouped_df_filt['AA_POSITION'] = grouped_df_filt['CODON_NUMBER'].map(aa_global_d
 grouped_df_filt['AA_CONSEQUENCE'] = 'p.' + grouped_df_filt['WILDTYPE_AA'] + grouped_df_filt['AA_POSITION'].astype(str) + grouped_df_filt['VARIANT_AA']
 
 ### Rearrange columns and save as barcode_codon_info.csv ###
-grouped_df_filt = grouped_df[["CODON_NUMBER", "VARIANTS", "AA_CONSEQUENCE", "BARCODE", "NUM_BARCODES", "WILDTYPE_CODON", "VARIANT_CODON", "WILDTYPE_AA", "VARIANT_AA", "VARIANT_CODON_DEPTH"]]
+grouped_df_filt = grouped_df[["CODON_NUMBER", "VARIANTS", "AA_CONSEQUENCE", "BARCODE", "NUM_BARCODES", "WILDTYPE_CODON", "VARIANT_CODON", "WILDTYPE_AA", "VARIANT_AA", "VARIANT_CODON_DEPTH", "AA_POSITION"]]
 
 grouped_df_filt.to_csv(barcode_codon_filepath, index=False)
 
