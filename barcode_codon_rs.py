@@ -157,10 +157,10 @@ for _, row in qc_df.iterrows():
 #####################################################################################################################################################################
 
 ### Function to parse through df and add missing cdna_pos values ###
-def add_missing_cdna_pos_to_variants(df, qc_df1, pos_to_ref_base):
+def add_missing_cdna_pos_to_variants(df, qc_df, pos_to_ref_base):
     ### Create a dictionary mapping AA_Position to Variant_Positions ###
     aa_to_variant_positions = {}
-    for _, row in qc_df1.iterrows():
+    for _, row in qc_df.iterrows():
         aa_position = row["AA_Position"]
         variant_positions = list(map(int, row["Variant_Positions"].split(", ")))
         aa_to_variant_positions[aa_position] = variant_positions
@@ -404,8 +404,24 @@ def find_smallest_depth(variants_depth):
 ### Apply find_smallest_depth function to create new "VARIANT_CODON_DEPTH" column with minimum depth found for that variant combination ###
 grouped_df['VARIANT_CODON_DEPTH'] = grouped_df['VARIANTS_DEPTH'].apply(find_smallest_depth)
 
+### Re-read QC file into df to make dictionary to map AA_position global to codon number ###
+qc_xls_report = pd.ExcelFile(qc_report)
+qc_df_report = pd.read_excel(qc_xls, "VariantProportion")
+
+qc_df_report = qc_df_report[["AA Position", "aa_position_global"]]
+qc_df_report = qc_df_report.drop_duplicates(subset=["AA Position"], keep='first')                                               ### drop duplicates based on 'AA Position' and keep the first occurrence ###
+qc_df_report = qc_df_report.reset_index(drop=True)
+
+### create dictionary with AA Position as key and aa_position_global as value ###
+aa_global_dict = qc_df_report.set_index('AA Position')['aa_position_global'].to_dict()
+
+### create AA_CONSEQUENCE column ###
+grouped_df_filt['AA_POSITION'] = grouped_df_filt['CODON_NUMBER'].map(aa_dict)
+grouped_df_filt['AA_CONSEQUENCE'] = 'p.' + grouped_df_filt['WILDTYPE_AA'] + grouped_df_filt['AA_POSITION'].astype(str) + grouped_df_filt['VARIANT_AA']
+
 ### Rearrange columns and save as barcode_codon_info.csv ###
-grouped_df_filt = grouped_df[["CODON_NUMBER", "VARIANTS", "BARCODE", "NUM_BARCODES", "WILDTYPE_CODON", "VARIANT_CODON", "WILDTYPE_AA", "VARIANT_AA", "VARIANT_CODON_DEPTH"]]
+grouped_df_filt = grouped_df[["CODON_NUMBER", "VARIANTS", "AA_CONSEQUENCE", "BARCODE", "NUM_BARCODES", "WILDTYPE_CODON", "VARIANT_CODON", "WILDTYPE_AA", "VARIANT_AA", "VARIANT_CODON_DEPTH"]]
+
 grouped_df_filt.to_csv(barcode_codon_filepath, index=False)
 
 ### Save unique barcodes to a text file ###
@@ -428,23 +444,23 @@ with open(unique_barcodes_filepath, "w") as f:
                                                                 ### PLOT HISTOGRAM AND HEATMAPS ###
 #####################################################################################################################################################################
 
-### Add new column 'CODON_#_VARIANT_CODON' with values that represent codon_number | variant codon ###
-grouped_df_filt['CODON_#_VARIANT_CODON'] = grouped_df_filt['CODON_NUMBER'].astype(str) + " | " + grouped_df_filt['VARIANT_CODON']
+### Add new column 'CODON_#_VARIANT_CODON' with values that represent aa_position | variant codon ###
+grouped_df_filt['CODON_#_VARIANT_CODON'] = grouped_df_filt['AA_POSITION'].astype(str) + " | " + grouped_df_filt['VARIANT_CODON']
 
 ### Plot variant codon depth information ###
 with PdfPages(codon_depths_pdf_filepath) as pdf:
-    ### histogram of depths vs codon_number | variant codon ###
+    ### histogram of depths vs aa_position | variant codon ###
 
     ### colour palette for histogram ###
     color_cycle = ['pink', 'mediumvioletred', 'darkmagenta']                                                                                        ### main 3 colors to repeat for the codons ###                                                                                           
-    bar_colors = [color_cycle[(codon_num - 1) % len(color_cycle)] for codon_num in grouped_df_filt['CODON_NUMBER']]                                 ### assign colors based on the codon number modulo the length of the color cycle ###
+    bar_colors = [color_cycle[(codon_num - 1) % len(color_cycle)] for codon_num in grouped_df_filt['AA_POSITION']]                                 ### assign colors based on the codon number modulo the length of the color cycle ###
 
     ### plot histogram with the bars coloured by the codon number ###
     fig, ax = plt.subplots(figsize=(50, 20))
     bars = ax.bar(grouped_df_filt['CODON_#_VARIANT_CODON'], grouped_df_filt['VARIANT_CODON_DEPTH'], color=bar_colors)
 
     ### configure x-axis label and tick labels ###
-    ax.set_xlabel('Codon Number | Variant Codon', fontsize=40, labelpad=30)
+    ax.set_xlabel('AA Position | Variant Codon', fontsize=40, labelpad=30)
     ax.set_xticks(np.arange(len(grouped_df_filt)))
     ax.set_xticklabels(grouped_df_filt['CODON_#_VARIANT_CODON'], rotation=90, fontsize=2)
     ax.set_xlim(-1, len(grouped_df_filt))
@@ -468,7 +484,7 @@ with PdfPages(codon_depths_pdf_filepath) as pdf:
     legend_labels = []
     for i, color in enumerate(color_cycle):
         ### calculate which codons correspond to this color (1-based indexing) ###
-        codons = [str(codon) for codon in range(i + 1, max(grouped_df_filt['CODON_NUMBER']) + 1, len(color_cycle))]
+        codons = [str(codon) for codon in range(i + 1, max(grouped_df_filt['AA_POSITION']) + 1, len(color_cycle))]
         legend_labels.append(f"Codons {', '.join(codons)}")
 
     ### create legend patches based on the color cycle and corresponding codons ###
@@ -489,7 +505,7 @@ with PdfPages(codon_depths_pdf_filepath) as pdf:
     plt.close(fig)
 
     ### Plot heatmap visualising read depths per variant codon ###
-    depth_heatmap_data = grouped_df_filt.pivot(index='VARIANT_CODON', columns='CODON_NUMBER', values='VARIANT_CODON_DEPTH')
+    depth_heatmap_data = grouped_df_filt.pivot(index='VARIANT_CODON', columns='AA_POSITION', values='VARIANT_CODON_DEPTH')
     fig, ax = plt.subplots(figsize=(50, 35))
     depth_heatmap = sns.heatmap(depth_heatmap_data, cmap='magma_r', annot=False, cbar_kws={'label': 'Variant Codon Depth'}, ax=ax)
 
@@ -499,7 +515,7 @@ with PdfPages(codon_depths_pdf_filepath) as pdf:
     depth_cbar.set_label('Variant Codon Depth', size=35, labelpad=40)
 
     ### configure x-axis label and tick labels ###
-    ax.set_xlabel('Codon Number', fontsize=40, labelpad=30)
+    ax.set_xlabel('AA Position', fontsize=40, labelpad=30)
     ax.set_xticks(np.arange(0.5, len(depth_heatmap_data.columns), 1))
     ax.set_xticklabels(depth_heatmap_data.columns, rotation=90, fontsize=20)
 
@@ -508,7 +524,7 @@ with PdfPages(codon_depths_pdf_filepath) as pdf:
     ax.set_yticklabels(ax.get_yticklabels(), rotation=0, fontsize=30)
 
     ### set title ###
-    ax.set_title('Heatmap of Variant Codon Depth Across Codon Numbers', fontsize=50, pad=50)
+    ax.set_title('Heatmap of Variant Codon Depth Across Amino Acid Positions', fontsize=50, pad=50)
 
     plt.subplots_adjust(left=0.13, right=0.95, top=0.9, bottom=0.1)
 
@@ -517,7 +533,7 @@ with PdfPages(codon_depths_pdf_filepath) as pdf:
     plt.close(fig)
 
     ### Plot heatmap visualising number of barcodes per variant codon ###
-    barcode_heatmap_data = grouped_df_filt.pivot(index='VARIANT_CODON', columns='CODON_NUMBER', values='NUM_BARCODES')
+    barcode_heatmap_data = grouped_df_filt.pivot(index='VARIANT_CODON', columns='AA_POSITION', values='NUM_BARCODES')
     fig, ax = plt.subplots(figsize=(50, 35))
     barcode_heatmap = sns.heatmap(barcode_heatmap_data, cmap='magma_r', annot=False, cbar_kws={'label': 'Number of Barcodes'}, ax=ax)
 
@@ -527,7 +543,7 @@ with PdfPages(codon_depths_pdf_filepath) as pdf:
     barcode_cbar.set_label('Number of Barcodes', size=35, labelpad=40)
 
     ### configure x-axis label and tick labels ###
-    ax.set_xlabel('Codon Number', fontsize=40, labelpad=30)
+    ax.set_xlabel('AA Position', fontsize=40, labelpad=30)
     ax.set_xticks(np.arange(0.5, len(barcode_heatmap_data.columns), 1))
     ax.set_xticklabels(barcode_heatmap_data.columns, rotation=90, fontsize=20)
 
@@ -535,7 +551,7 @@ with PdfPages(codon_depths_pdf_filepath) as pdf:
     ax.set_ylabel('Variant Codon', fontsize=40, labelpad=30)
     ax.set_yticklabels(ax.get_yticklabels(), rotation=0, fontsize=30)
 
-    ax.set_title('Heatmap of Number of Barcodes Across Codon Numbers', fontsize=50, pad=50)
+    ax.set_title('Heatmap of Number of Barcodes Across Amino Acid Positions', fontsize=50, pad=50)
 
     plt.subplots_adjust(left=0.13, right=0.95, top=0.9, bottom=0.1)
 
