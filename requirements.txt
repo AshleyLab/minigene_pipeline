@@ -15,7 +15,7 @@ fonttools==4.52.3
 holoviews==1.19.1
 idna==3.7
 isal==1.6.1
-Jinja2==3.1.4
+Jinja2==3.1.6
 kiwisolver==1.4.5
 kneebow==1.0.2
 Levenshtein==0.25.1
