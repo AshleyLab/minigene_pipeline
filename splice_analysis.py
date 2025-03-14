@@ -712,9 +712,9 @@ def delete_gmap_database(database_dir, database_name):
         print(f"GMAP database at {database_path} does not exist or has already been deleted.")
 
 
-###########################
-### VIsoQLR PROCESSING #### 
-###########################
+####################################
+### (ADAPTED) VIsoQLR PROCESSING ###
+####################################
 
 def gff3_data_loading(input_path):
     gff3 = pd.read_csv(input_path, sep='\t', header=None, comment='#', dtype=str)
@@ -1199,9 +1199,9 @@ def process_and_combine_iso_freq_files(visoqlr_no_cdna_dir, visoqlr_combined_bc_
             combined_df.to_csv(output_path, index=False)
 
 
-###################################################################################################################################################################################
-                                                                                # VISOQLR PLOTTING #                                                                
-###################################################################################################################################################################################
+##################################
+### (ADAPTED) VISOQLR PLOTTING ###                                                                
+##################################
 
 ### Set constant bar height and fixed figure height per isoform for plots ###
 BAR_HEIGHT = 0.4  
