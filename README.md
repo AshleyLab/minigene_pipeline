@@ -13,10 +13,10 @@ Single nucleotide variants (SNVs) were introduced into the mutagenesis region, s
 #### Installation of Minigene Pipeline 
 1. Navigate into directory where minigene pipeline is to be  installed in
    ```
-   wget -O minigene_pipeline-v0.1.0-beta.tar.bz2 "https://github.com/AshleyLab/minigene_pipeline/releases/download/v0.1.0-beta/minigene_pipeline-v0.1.0-beta.tar.bz2"
-   tar -tjf minigene_pipeline-v0.1.0-beta.tar.bz2
+   wget https://github.com/AshleyLab/minigene_pipeline/releases/download/v1.0/minigene_pipeline.tar.gz
+   tar -xvzf minigene_pipeline.tar.gz
 #### Set Up Minigene Pipeline's Environment
-2. Navigate into copied minigene_pipeline directory
+2. Navigate into minigene_pipeline directory
    ```
    cd minigene_pipeline
 3. Create and activate minigene_env 
