@@ -416,16 +416,16 @@ qc_df_report = qc_df_report.reset_index(drop=True)
 aa_global_dict = qc_df_report.set_index('AA Position')['aa_position_global'].to_dict()
 
 ### create AA_CONSEQUENCE column ###
-grouped_df_filt['AA_POSITION'] = grouped_df_filt['CODON_NUMBER'].map(aa_global_dict)
-grouped_df_filt['AA_CONSEQUENCE'] = 'p.' + grouped_df_filt['WILDTYPE_AA'] + grouped_df_filt['AA_POSITION'].astype(str) + grouped_df_filt['VARIANT_AA']
+grouped_df['AA_POSITION'] = grouped_df['CODON_NUMBER'].map(aa_global_dict)
+grouped_df['AA_CONSEQUENCE'] = 'p.' + grouped_df['WILDTYPE_AA'] + grouped_df['AA_POSITION'].astype(str) + grouped_df['VARIANT_AA']
 
 ### Rearrange columns and save as barcode_codon_info.csv ###
-grouped_df_filt = grouped_df[["CODON_NUMBER", "AA_POSITION", "VARIANTS", "AA_CONSEQUENCE", "BARCODE", "NUM_BARCODES", "WILDTYPE_CODON", "VARIANT_CODON", "WILDTYPE_AA", "VARIANT_AA", "VARIANT_CODON_DEPTH"]]
+grouped_df = grouped_df[["CODON_NUMBER", "AA_POSITION", "VARIANTS", "AA_CONSEQUENCE", "BARCODE", "NUM_BARCODES", "WILDTYPE_CODON", "VARIANT_CODON", "WILDTYPE_AA", "VARIANT_AA", "VARIANT_CODON_DEPTH"]]
 
-grouped_df_filt.to_csv(barcode_codon_filepath, index=False)
+grouped_df.to_csv(barcode_codon_filepath, index=False)
 
 ### Save unique barcodes to a text file ###
-all_barcodes = [barcode.strip() for barcodes in grouped_df_filt["BARCODE"] for barcode in barcodes.split(", ")]                              ### flatten the barcodes into a list ###
+all_barcodes = [barcode.strip() for barcodes in grouped_df["BARCODE"] for barcode in barcodes.split(", ")]                              ### flatten the barcodes into a list ###
 unique_barcodes = set()
 duplicates = set()
 
@@ -445,7 +445,7 @@ with open(unique_barcodes_filepath, "w") as f:
 #####################################################################################################################################################################
 
 ### Add new column 'CODON_#_VARIANT_CODON' with values that represent aa_position | variant codon ###
-grouped_df_filt['CODON_#_VARIANT_CODON'] = grouped_df_filt['AA_POSITION'].astype(str) + " | " + grouped_df_filt['VARIANT_CODON']
+grouped_df['CODON_#_VARIANT_CODON'] = grouped_df['AA_POSITION'].astype(str) + " | " + grouped_df['VARIANT_CODON']
 
 ### Plot variant codon depth information ###
 with PdfPages(codon_depths_pdf_filepath) as pdf:
@@ -453,21 +453,21 @@ with PdfPages(codon_depths_pdf_filepath) as pdf:
 
     ### colour palette for histogram ###
     color_cycle = ['pink', 'mediumvioletred', 'darkmagenta']                                                                                        ### main 3 colors to repeat for the codons ###                                                                                           
-    bar_colors = [color_cycle[(codon_num - 1) % len(color_cycle)] for codon_num in grouped_df_filt['AA_POSITION']]                                 ### assign colors based on the codon number modulo the length of the color cycle ###
+    bar_colors = [color_cycle[(codon_num - 1) % len(color_cycle)] for codon_num in grouped_df['AA_POSITION']]                                 ### assign colors based on the codon number modulo the length of the color cycle ###
 
     ### plot histogram with the bars coloured by the codon number ###
     fig, ax = plt.subplots(figsize=(50, 20))
-    bars = ax.bar(grouped_df_filt['CODON_#_VARIANT_CODON'], grouped_df_filt['VARIANT_CODON_DEPTH'], color=bar_colors)
+    bars = ax.bar(grouped_df['CODON_#_VARIANT_CODON'], grouped_df['VARIANT_CODON_DEPTH'], color=bar_colors)
 
     ### configure x-axis label and tick labels ###
     ax.set_xlabel('AA Position | Variant Codon', fontsize=40, labelpad=30)
-    ax.set_xticks(np.arange(len(grouped_df_filt)))
-    ax.set_xticklabels(grouped_df_filt['CODON_#_VARIANT_CODON'], rotation=90, fontsize=2)
-    ax.set_xlim(-1, len(grouped_df_filt))
+    ax.set_xticks(np.arange(len(grouped_df)))
+    ax.set_xticklabels(grouped_df['CODON_#_VARIANT_CODON'], rotation=90, fontsize=2)
+    ax.set_xlim(-1, len(grouped_df))
 
     ### configure y-axis label and tick labels ###
     ax.set_ylabel('Variant Codon Depth', fontsize=40, labelpad=30)
-    yticks = np.arange(0, grouped_df_filt['VARIANT_CODON_DEPTH'].max() + 1000, 500)
+    yticks = np.arange(0, grouped_df['VARIANT_CODON_DEPTH'].max() + 1000, 500)
     ax.set_yticks(yticks)
     ax.set_yticklabels(yticks, fontsize=30)
 
@@ -484,7 +484,7 @@ with PdfPages(codon_depths_pdf_filepath) as pdf:
     legend_labels = []
     for i, color in enumerate(color_cycle):
         ### calculate which codons correspond to this color (1-based indexing) ###
-        codons = [str(codon) for codon in range(i + 1, max(grouped_df_filt['AA_POSITION']) + 1, len(color_cycle))]
+        codons = [str(codon) for codon in range(i + 1, max(grouped_df['AA_POSITION']) + 1, len(color_cycle))]
         legend_labels.append(f"Codons {', '.join(codons)}")
 
     ### create legend patches based on the color cycle and corresponding codons ###
@@ -505,7 +505,7 @@ with PdfPages(codon_depths_pdf_filepath) as pdf:
     plt.close(fig)
 
     ### Plot heatmap visualising read depths per variant codon ###
-    depth_heatmap_data = grouped_df_filt.pivot(index='VARIANT_CODON', columns='AA_POSITION', values='VARIANT_CODON_DEPTH')
+    depth_heatmap_data = grouped_df.pivot(index='VARIANT_CODON', columns='AA_POSITION', values='VARIANT_CODON_DEPTH')
     fig, ax = plt.subplots(figsize=(50, 35))
     depth_heatmap = sns.heatmap(depth_heatmap_data, cmap='magma_r', annot=False, cbar_kws={'label': 'Variant Codon Depth'}, ax=ax)
 
@@ -533,7 +533,7 @@ with PdfPages(codon_depths_pdf_filepath) as pdf:
     plt.close(fig)
 
     ### Plot heatmap visualising number of barcodes per variant codon ###
-    barcode_heatmap_data = grouped_df_filt.pivot(index='VARIANT_CODON', columns='AA_POSITION', values='NUM_BARCODES')
+    barcode_heatmap_data = grouped_df.pivot(index='VARIANT_CODON', columns='AA_POSITION', values='NUM_BARCODES')
     fig, ax = plt.subplots(figsize=(50, 35))
     barcode_heatmap = sns.heatmap(barcode_heatmap_data, cmap='magma_r', annot=False, cbar_kws={'label': 'Number of Barcodes'}, ax=ax)
 
