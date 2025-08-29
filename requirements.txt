@@ -49,7 +49,7 @@ pyviz_comms==3.0.2
 PyYAML==6.0.1
 rapidfuzz==3.9.7
 regex==2024.4.28
-requests==2.32.3
+requests==2.32.4
 seaborn==0.13.2
 setuptools==75.3.0
 six==1.16.0
