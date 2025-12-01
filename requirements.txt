@@ -11,7 +11,7 @@ cutadapt==4.8
 cycler==0.12.1
 dnaio==1.2.0
 et-xmlfile==1.1.0
-fonttools==4.52.3
+fonttools==4.61.0
 holoviews==1.19.1
 idna==3.7
 isal==1.6.1
