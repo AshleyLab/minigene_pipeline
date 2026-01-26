@@ -61,7 +61,7 @@ uc-micro-py==1.0.3
 urllib3==2.2.2
 userpath==1.9.1
 webencodings==0.5.1
-wheel==0.45.1
+wheel==0.46.2
 xopen==2.0.1
 xyzservices==2024.6.0
 zlib-ng==0.4.3
