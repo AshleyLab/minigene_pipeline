@@ -34,7 +34,7 @@ packaging==23.2
 pandas==2.2.2
 panel==1.4.4
 param==2.1.1
-pillow==10.3.0
+pillow==12.1.1
 pipx==1.4.3
 platformdirs==4.1.0
 plotly==5.24.1
