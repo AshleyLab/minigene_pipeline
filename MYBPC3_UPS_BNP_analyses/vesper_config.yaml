@@ -1,0 +1,76 @@
+# ───────────────── vesper_i config variables ───────────────── #
+tile_number: 1
+
+baseq_threshold: 30
+mapq_threshold: 30
+read_length_filter: 0
+
+### T1 start and end ###
+start_bp: 62
+end_bp: 171
+
+# ### T2 start and end ###
+# start_bp: 137
+# end_bp: 244
+
+### path to file that contains 'bp' and 'cDNA' columns ###
+cDNA_file: '/oak/stanford/groups/euan/projects/kaiser/MYBPC3_BNP_Analyses/data/MYBPC3_BNP_T1_77-171.csv'
+
+### number of bp to trim from the start and end of each fastq reads ###
+trim_length: 20
+
+### path to directory of input fastq files ###
+raw_fastqgz_dir: "/oak/stanford/groups/euan/projects/kaiser/MYBPC3_BNP_Analyses/data/Hiseq_fastq/raw/T1"
+
+### path to reference fasta file ###
+ref_fasta: "/oak/stanford/groups/euan/projects/kaiser/MYBPC3_BNP_Analyses/data/MYBPC3_Tile1.fasta"
+
+### path to output dir for all result files ###
+root_output_dir: "/oak/stanford/groups/euan/projects/kaiser/MYBPC3_UPS_BNP_analyses/T1_Results"
+
+
+
+### NOTE: 
+### both tiles must be run with vesper_i.py before running vesper_ii.py,
+### and users must transfer raw variants files of tile1 and tile2 generated from vesper_i to the same directory (vesper_i_raw_variants_dir) to be called from vesper_ii.py
+
+# ───────────────── vesper_ii config variables ───────────────── #
+### define experimental and control populations for each protein/sample ###
+ROLE_MAP:                                                                                                                                                                                                           
+    BNP:                                 
+      exp: "high"                                                                                                                                                                                                     
+      control: "low"                                                                                                                                                                                                  
+    MYBPC3:
+      exp: "low"
+      control: "high"
+    UPS:
+      exp: "GFP"
+      control: "nonGFP"
+    Mutagenesis:
+      exp: "iPSC"
+      control: "control"
+
+### minimum allele frequency (MAF) cutoff ###
+maf_cutoff: 0.0005
+
+### path to directory containing count files from CX pipeline ###
+cx_count_files_dir: "/Users/kaiser19/Documents/MYBPC3/MYBPC3_BNP_UPS_Analyses/hisat2_count_files"
+
+### path to file that contains variants in iPSC sample ###
+ipsc_list_path: '/Users/kaiser19/Documents/MYBPC3/MYBPC3_BNP_UPS_Analyses/iPSC_list_Jan22_Hisat2.csv'
+
+### primer positional ranges to exclude from analyses from each tile ###
+PRIMER_RANGES:                                                                                                                                                                                                      
+    t1:                                  
+      - [-79, -58]                                                                                                                                                                                                    
+      - [967, 987]                                                                                                                                                                                                    
+    t2:
+      - [-16, 0]
+      - [927, 930]
+      - [1038, 1060]
+
+### path to directory of raw variants files from t1 and t2 called from vesper_i.py; should have columns 'read_id' and 'cdna_variants'
+vesper_i_raw_variants_dir: "/Users/kaiser19/Documents/MYBPC3/MYBPC3_BNP_UPS_Analyses/sample_rep_raw"
+
+### path to output dir for all result files ###
+vesperii_output_dir: "/oak/stanford/groups/euan/projects/kaiser/MYBPC3_UPS_BNP_analyses"
