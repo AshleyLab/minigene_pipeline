@@ -26,16 +26,20 @@ Single nucleotide variants (SNVs) were introduced into the mutagenesis region, s
 4. Install packages
    ```
    python3 setup_minigene_env.py 
-#### Configure minigene_config.yaml file
+#### Execution of splice analysis
 5. Edit minigene_config.yaml file to suit your data
    ```
-   vim minigene_config.yaml
-   
-   # press 'i' to edit and make changes; when done, press 'esc', ':wq' and hit 'enter'
-#### Execution
-6. For splice analysis:
-   ```
+   cd minigene_splice_analyses
+   vim minigene_config.yaml     # press 'i' to edit; when done, press 'esc', ':wq', 'enter'
    python3 run_minigene_splice.py
+
+#### Execution of MYBPC3_BNP_UPS_analyses:
+6. Edit vesper_config.yaml
+   ```
+   cd MYBPC3_BNP_UPS_analyses
+   python3 vesper_i.py
+   python3 vesper_ii.py
+
 #### Tools
 samtools: [samtools](https://github.com/samtools/samtools)  
 chopper: [chopper](https://github.com/wdecoster/chopper)  
