@@ -21,7 +21,7 @@ import seaborn as sns
 from matplotlib.backends.backend_pdf import PdfPages
 from matplotlib.colors import ListedColormap
 
-### Determine the full path of which minigene_splicing_assay dir was copied to ###
+### Determine the full path of which pipeline is in ###
 minigene_dir = os.path.dirname(os.path.realpath(__file__))
 
 ### Load config.yaml ###

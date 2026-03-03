@@ -28,7 +28,7 @@ import plotly.express as px
 import plotly.graph_objs as go
 from plotly.subplots import make_subplots
 
-### Determine the full path of which minigene_splicing_assay dir was copied to ###
+### Determine the full path of which pipeline is in ###
 minigene_dir = os.path.dirname(os.path.realpath(__file__))
 
 ### Load config.yaml ###
