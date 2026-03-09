@@ -37,8 +37,11 @@ Single nucleotide variants (SNVs) were introduced into the mutagenesis region, s
 6. Edit vesper_config.yaml
    ```
    cd MYBPC3_BNP_UPS_analyses
+   vim vesper_config.yaml
    python3 vesper_i.py
    python3 vesper_ii.py
+   Rscript vesper_iii.R
+   
 
 #### Tools
 samtools: [samtools](https://github.com/samtools/samtools)  
