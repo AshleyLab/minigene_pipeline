@@ -1,4 +1,4 @@
-# ───────────────── vesper_i config variables ───────────────── #
+# ───────────────────────────────────────────────────────────────────────────────────── vesper_i config variables ───────────────────────────────────────────────────────────────────────────────────── #
 tile_number: 1
 
 baseq_threshold: 30
@@ -34,7 +34,7 @@ root_output_dir: "/oak/stanford/groups/euan/projects/kaiser/MYBPC3_UPS_BNP_analy
 ### both tiles must be run with vesper_i.py before running vesper_ii.py,
 ### and users must transfer raw variants files of tile1 and tile2 generated from vesper_i to the same directory (vesper_i_raw_variants_dir) to be called from vesper_ii.py
 
-# ───────────────── vesper_ii config variables ───────────────── #
+# ───────────────────────────────────────────────────────────────────────────────────── vesper_ii config variables ───────────────────────────────────────────────────────────────────────────────────── #
 ### define experimental and control populations for each protein/sample ###
 ROLE_MAP:                                                                                                                                                                                                           
     BNP:                                 
@@ -74,3 +74,23 @@ vesper_i_raw_variants_dir: "/Users/kaiser19/Documents/MYBPC3/MYBPC3_BNP_UPS_Anal
 
 ### path to output dir for all result files ###
 vesperii_output_dir: "/oak/stanford/groups/euan/projects/kaiser/MYBPC3_UPS_BNP_analyses"
+
+
+
+
+
+
+### NOTE: 
+### vesper_ii.py must be run before vesper_iii.R, as vesper_iii relies on data_SNV_pairs and data_snvs files generated from vesper_ii.py, 
+### which are located in vesperii_output_dir/mm2_hisat2_paired_counts and vesperii_output_dir/combined_t1t2_hisat2_count_files respectively.
+
+# ───────────────────────────────────────────────────────────────────────────────────── vesper_iii config variables ───────────────────────────────────────────────────────────────────────────────────── #
+# number_obs_control: BNP_low, MYBPC3_high, UPS_nonGFP
+# number_obs_experiment: BNP_high, MYBPC3_low, UPS_GFP
+protein: "BNP"
+control_population: "low"
+experiment_population: "high"
+
+### path to file that contains columns: 'Variant', 'bp', 'REF',	'observed_nucleotide', 'cDNA', 'cDNA_name', 'AA_consequence', 'Consequence', 'Pathogenic', 'PLP_BLB_VUS'
+all_MYBPC3_vars_consequence: "/Users/kaiser19/Documents/MYBPC3/MYBPC3_BNP_UPS_Analyses/MYBPC3_T1T2_variant_annotation_table.csv
+
